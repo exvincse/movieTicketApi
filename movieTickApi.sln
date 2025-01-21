@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "movieTickApi", "movieTickApi\movieTickApi.csproj", "{39F3ACD0-2F57-400C-9BF9-C02EFE7E05E3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "方案項目", "方案項目", "{B7A744F4-1F70-4486-BA4E-E05B1A9DBD98}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{39F3ACD0-2F57-400C-9BF9-C02EFE7E05E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39F3ACD0-2F57-400C-9BF9-C02EFE7E05E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39F3ACD0-2F57-400C-9BF9-C02EFE7E05E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39F3ACD0-2F57-400C-9BF9-C02EFE7E05E3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ACFCE7B5-851E-4776-ACAA-C17DC3FF74E9}
+	EndGlobalSection
+EndGlobal
