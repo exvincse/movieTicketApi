@@ -9,5 +9,6 @@
                 public DateTime CreatedAt { get; set; }
                 public DateTime ExpiresAt { get; set; }
                 public Boolean IsRevoked { get; set; }
+                public UserRefreshTokens UserRefreshTokens { get; set; }
         }
 }

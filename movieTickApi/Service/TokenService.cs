@@ -43,6 +43,26 @@ namespace movieTickApi.Service
                         return Guid.NewGuid().ToString();
                 }
 
+                public ClaimsPrincipal GetPrincipalFromToken()
+                {
+                        var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                        var tokenHandler = new JwtSecurityTokenHandler();
+                        SecurityToken validatedToken;
+
+                        var jwtUser = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                        {
+                                ValidateIssuer = true,
+                                ValidIssuer = _configuration["Jwt:Issuer"],
+                                ValidateAudience = true,
+                                ValidAudience = _configuration["Jwt:Audience"],
+                                ValidateLifetime = true,
+                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:KEY"])),
+                                ClockSkew = TimeSpan.Zero
+                        }, out validatedToken);
+
+                        return jwtUser;
+                }
+
                 public async Task<bool>  IsTokenRevokedAsync()
                 {
                         var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];

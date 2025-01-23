@@ -6,5 +6,6 @@
                 public Guid UserId { get; set; }
                 public string RefreshToken { get; set; }
                 public DateTime ExpiryDate { get; set; }
+                public ICollection<Token> Token { get; set; }
         }
 }

@@ -22,6 +22,11 @@ namespace movieTickApi.Models
                             .HasOne(t => t.User)
                             .WithMany(u => u.UserProfile)
                             .HasForeignKey(t => t.UserId);
+
+                        modelBuilder.Entity<Token>()
+                            .HasOne(t => t.UserRefreshTokens)
+                            .WithMany(u => u.Token)
+                            .HasForeignKey(t => t.UserId);
                 }
         }
 }

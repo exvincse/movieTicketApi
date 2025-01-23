@@ -4,17 +4,24 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using movieTickApi.Service;
+using Azure.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddCors(options =>
 {
-        options.AddPolicy("AllowSpecificOrigins", policy =>
+        options.AddPolicy("AllowSpecificOrigins", builder =>
         {
-                policy.WithOrigins("http://localhost:8080").AllowAnyHeader().AllowAnyMethod();
+                builder.WithOrigins("http://localhost:8080")
+                       .AllowCredentials()
+                       .AllowAnyHeader()
+                       .AllowAnyMethod();
         });
 });
+
+// 註冊背景服務
+builder.Services.AddHostedService<TokenCleanupService>();
 
 builder.Services.AddDbContext<WebDbContext>(options =>
     options.UseSqlServer(
@@ -22,9 +29,6 @@ builder.Services.AddDbContext<WebDbContext>(options =>
     ));
 
 // Add services to the container.
-
-builder.Services.AddControllers();
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -48,14 +52,49 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             options.Events = new JwtBearerEvents
             {
+                    // 客製化事件處理
+                    OnMessageReceived = context =>
+                    {
+                            // 在這裡可以攔截請求檢查 Authorization 標頭
+                            if (!context.Request.Headers.ContainsKey("Authorization") && !context.Request.Path.StartsWithSegments("/api/User/Login"))
+                            {
+                                    context.NoResult(); // 表示驗證失敗
+
+                                    // 過期回給前端isRepeatLogin，讓前端重新導入到登入頁
+                                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                    context.Response.ContentType = "application/json";
+                                    var errorResponse = new
+                                    {
+                                            StatusCode = 401,
+                                            Message = "請重新登入",
+                                            Result = new
+                                            {
+                                                    isRepeatLogin = true,
+                                                    isReNewToken = false
+                                            }
+                                    };
+                                    return context.Response.WriteAsJsonAsync(errorResponse);
+                            }
+                            return Task.CompletedTask;
+                    },
                     // jwt套件設置token沒過期觸發的生命週期
                     OnTokenValidated = async context =>
                     {
+                            var request = context.HttpContext.Request;
+
+                            // 檢查是否是刷新 token 的請求
+                            if (request.Path.StartsWithSegments("/api/User/RefreshToken"))
+                            {
+                                    // 這是刷新 token 請求，直接跳過檢查
+                                    return;
+                            }
+
                             var tokenService = context.HttpContext.RequestServices.GetRequiredService<TokenService>();
                             var IsAccessTokenRevoked = await tokenService.IsAccessTokenRevoked();
 
                             if (IsAccessTokenRevoked == true)
                             {
+                                    
                                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                                     context.Response.ContentType = "application/json";
                                     var errorResponse = new
@@ -65,7 +104,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                                             Result = new
                                             {
                                                     isRepeatLogin = false,
-                                                    isReNewToken = true
+                                                    isReNewToken = true,
+                                                    path = request.Path
                                             }
                                     };
 
@@ -77,6 +117,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     // jwt套件設置token過期觸發的生命週期
                     OnAuthenticationFailed = async context =>
                     {
+                            var request = context.HttpContext.Request;
                             var tokenService = context.HttpContext.RequestServices.GetRequiredService<TokenService>();
 
                             // 判斷http  cookie設置refresh token是否過期
@@ -101,6 +142,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             } 
                             else
                             {
+                                    // 檢查是否是刷新 token 的請求
+                                    if (request.Path.StartsWithSegments("/api/User/RefreshToken"))
+                                    {
+                                            // 這是刷新 token 請求，直接跳過檢查
+                                            return;
+                                    }
                                     // refresh token沒過期，但jwt套件設置token過期。則回給前端isReNewToken讓前端重新換發新的token
                                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                                     context.Response.ContentType = "application/json";
@@ -139,6 +186,8 @@ if (app.Environment.IsDevelopment())
         app.UseSwagger();
         app.UseSwaggerUI();
 }
+
+//app.UseMiddleware<TokenValidation>();
 
 app.UseCors("AllowSpecificOrigins");
 
