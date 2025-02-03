@@ -16,6 +16,8 @@ namespace movieTickApi.Models
 
                 public DbSet<UserProfile> UserProfile { get; set; }
 
+                public DbSet<OtpVerification> OtpVerification { get; set; }
+
                 protected override void OnModelCreating(ModelBuilder modelBuilder)
                 {
                         modelBuilder.Entity<UserProfile>()

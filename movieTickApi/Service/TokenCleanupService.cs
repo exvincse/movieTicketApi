@@ -17,7 +17,7 @@ namespace movieTickApi.Service
                         await CleanupExpiredTokens();
                         while (!stoppingToken.IsCancellationRequested)
                         {
-                                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken); // 每 30 分鐘執行一次
+                                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
                                 await CleanupExpiredTokens();
                         }
                 }
