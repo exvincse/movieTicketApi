@@ -8,11 +8,15 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using movieTickApi.Service;
 using movieTickApi.Helper;
+using movieTickApi.Models.Users;
+using movieTickApi.Dtos.Output;
+using movieTickApi.Dtos.Input.Users;
+using movieTickApi.Dtos.Output.Users;
 
 
 namespace movieTickApi.Controllers
 {
-        [ApiController]
+    [ApiController]
         [Route("api/[controller]")]
         public class UserController : ControllerBase
         {
@@ -41,7 +45,7 @@ namespace movieTickApi.Controllers
 
                 // 註冊帳號
                 [HttpPost("PostRegister")]
-                public async Task<RequestResultDto<object>> PostRegister([FromBody] RegisterDto value)
+                public async Task<RequestResultOutputDto<object>> PostRegister([FromBody] RegisterInputDto value)
                 {
                         var passwordHash = BCrypt.Net.BCrypt.HashPassword(value.Password);
 
@@ -58,6 +62,7 @@ namespace movieTickApi.Controllers
                                         {
                                                 Id = Guid.NewGuid(),
                                                 Name = value.Email.Split('@')[0],
+                                                Email = value.Email,
                                                 CreateDatetime = DateTime.UtcNow,
                                                 ModifyDatetime = DateTime.UtcNow,
                                         }
@@ -111,9 +116,9 @@ namespace movieTickApi.Controllers
                         });
 
 
-                        return _responseService.RequestResult<object>(new RequestResultDto<object>
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
-                                StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                StatusCode = HttpContext.Response.StatusCode,
                                 Message = "註冊成功",
                                 Result = new
                                 {
@@ -124,14 +129,14 @@ namespace movieTickApi.Controllers
 
                 // 取得登入token
                 [HttpPost("Login")]
-                public async Task<RequestResultDto<object>> PostLogin([FromBody] LoginDto value)
+                public async Task<RequestResultOutputDto<object>> PostLogin([FromBody] LoginInputDto value)
                 {
                         var selectUser= await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
 
                         if (selectUser == null || !BCrypt.Net.BCrypt.Verify(value.Password, selectUser.Password)) {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "帳號密碼錯誤",
                                         Result = new { 
                                                 isAccountError = true
@@ -181,9 +186,10 @@ namespace movieTickApi.Controllers
                                         Expires = DateTime.UtcNow.AddMinutes(15)
                                 });
 
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
                                         Result = new
                                         {
@@ -193,10 +199,10 @@ namespace movieTickApi.Controllers
                         }
                 }
 
-                // 取得登出token
+                // 登出
                 [HttpPost("Logout")]
                 [Authorize]
-                public async Task<RequestResultDto<object>> PostLogout()
+                public async Task<RequestResultOutputDto<object>> PostLogout()
                 {
                         var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                         var result = await _context.Token.Where(x => x.token == token && x.IsRevoked == false).FirstOrDefaultAsync();
@@ -216,18 +222,18 @@ namespace movieTickApi.Controllers
 
                                 _context.SaveChanges();
 
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "已登出",
                                         Result = null
                                 });
                         } 
                         else
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
                                         Result = null
                                 });
@@ -236,59 +242,30 @@ namespace movieTickApi.Controllers
 
                 // 刷新token
                 [HttpGet("ReFreshToken")]
-                [Authorize]
-                public async Task<RequestResultDto<object>> GetReFreshToken()
+                public async Task<RequestResultOutputDto<object>> GetReFreshToken()
                 {
                         var reFreshToken = await _context.UserRefreshTokens.Where(x => x.RefreshToken == Request.Cookies["refreshToken"]).FirstOrDefaultAsync();
 
                         if (reFreshToken == null || reFreshToken.ExpiryDate < DateTime.UtcNow)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
-                                        Result = null
+                                        Result = new
+                                        {
+                                                isRepeatLogin = true
+                                        }
                                 });
                         }
                         else
                         {
-                                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                                var userEmail = User.FindFirstValue(ClaimTypes.Email);
-
-                                if (string.IsNullOrEmpty(userId))
-                                {
-                                        return _responseService.RequestResult<object>(new RequestResultDto<object>
-                                        {
-                                                StatusCode = HttpContext.Response.StatusCode.ToString(),
-                                                Message = "無效的請求",
-                                                Result = null
-                                        });
-                                }
-
-                                var user = await _context.User.FirstOrDefaultAsync(x => x.Id.ToString() == userId && x.Email == userEmail);
-                                if (user == null)
-                                {
-                                        return _responseService.RequestResult<object>(new RequestResultDto<object>
-                                        {
-                                                StatusCode = HttpContext.Response.StatusCode.ToString(),
-                                                Message = "用戶不存在",
-                                                Result = null
-                                        });
-                                }
-
-                                var authToken = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                                var revokeAccessToken = await _context.Token.FirstOrDefaultAsync(x => x.token == authToken);
-
-                                if (revokeAccessToken != null) {
-                                        revokeAccessToken.IsRevoked = true;
-                                        _context.Token.Update(revokeAccessToken);
-                                        _context.SaveChanges();
-                                }
+                                var user = await _context.User.FirstOrDefaultAsync(x => x.Id == reFreshToken.UserId);
 
                                  var claim = new List<Claim>
                                 {
-                                        new Claim(ClaimTypes.Email, userEmail.ToString()),
-                                        new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                                        new Claim(ClaimTypes.Email, user.Email.ToString()),
+                                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
                                 };
 
                                 var AccessToken = _tokenService.CreateAccessToken(claim);
@@ -306,9 +283,9 @@ namespace movieTickApi.Controllers
                                 _context.Token.Add(addAccessToken);
                                 await _context.SaveChangesAsync();
 
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
                                         Result = new
                                         {
@@ -321,14 +298,14 @@ namespace movieTickApi.Controllers
                 // 取得使用者資料
                 [HttpGet("GetUserProfile")]
                 [Authorize]
-                public async Task<ActionResult<RequestResultDto<object>>> GetUserProfile()
+                public async Task<ActionResult<RequestResultOutputDto<object>>> GetUserProfile()
                 {
                         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                         if (userId == null) {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
                                         Result = null
                                 });
@@ -338,22 +315,29 @@ namespace movieTickApi.Controllers
 
                         if (result == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "找不到資料",
                                         Result = null
                                 });
                         }
                         else {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
-                                        Result = new UserProfileDto
+                                        Result = new UserProfileOutputDto
                                         {
-                                                Id = result.Id,
-                                                Name = result.Name
+                                                UserNo = result.UserNo,
+                                                Name = result.Name,
+                                                Email = result.Email,
+                                                CountyCode = result.CountyCode,
+                                                DistrictCode = result.DistrictCode,
+                                                PostalCode = result.PostalCode,
+                                                Address = result.Address,
+                                                SexCode = result.SexCode,
+                                                Birthday = result.Birthday,
                                         }
                                 });
                         }
@@ -361,7 +345,7 @@ namespace movieTickApi.Controllers
 
                 // 註冊帳號發送信件
                 [HttpPost("PostSendMail")]
-                public async Task<RequestResultDto<object>> PostSendMail([FromBody] PostSendMailDto value)
+                public async Task<RequestResultOutputDto<object>> PostSendMail([FromBody] PostSendMailInputDto value)
                 {
                         var mailHelper = await _mailHelper.SendMail(new EmailRequest
                         {
@@ -371,17 +355,17 @@ namespace movieTickApi.Controllers
 
                         if (mailHelper == true)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "發送成功",
                                         Result = true
                                 });
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultDto<object>
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
-                                StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                StatusCode = HttpContext.Response.StatusCode,
                                 Message = "發送失敗",
                                 Result = false
                         });
@@ -389,7 +373,7 @@ namespace movieTickApi.Controllers
 
                 // 驗證OTP
                 [HttpPost("PostValidOtp")]
-                public async Task<RequestResultDto<object>> PostValidOtp([FromBody] PostValidOtp validOtp)
+                public async Task<RequestResultOutputDto<object>> PostValidOtp([FromBody] PostValidInputDto validOtp)
                 {
                         var otp =_context.OtpVerification
                                 .Where(x => x.Email == validOtp.Email && x.Otp == validOtp.Otp && x.ExpirationTime > DateTime.UtcNow && x.IsUsed == false)
@@ -398,9 +382,9 @@ namespace movieTickApi.Controllers
 
                         if(otp == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "驗證碼輸入錯誤或過期",
                                         Result = false
                                 });
@@ -413,9 +397,9 @@ namespace movieTickApi.Controllers
 
                         //HttpContext.Session.Remove("Email");
 
-                        return _responseService.RequestResult<object>(new RequestResultDto<object>
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
-                                StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                StatusCode = HttpContext.Response.StatusCode,
                                 Message = "驗證成功",
                                 Result = true
                         });
@@ -423,24 +407,99 @@ namespace movieTickApi.Controllers
 
                 // 驗證Email
                 [HttpPost("PostValidEmail")]
-                public async Task<RequestResultDto<object>> PostValidEmail([FromBody] PostSendMailDto value)
+                public async Task<RequestResultOutputDto<object>> PostValidEmail([FromBody] PostSendMailInputDto value)
                 {
                         var validEmail = await _context.User.Where(x => x.Email == value.Email).FirstOrDefaultAsync();
 
                         if (validEmail == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultDto<object>
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                        StatusCode = HttpContext.Response.StatusCode,
                                         Message = "此Email尚未註冊",
                                         Result = false
                                 });
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultDto<object>
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
-                                StatusCode = HttpContext.Response.StatusCode.ToString(),
+                                StatusCode = HttpContext.Response.StatusCode,
                                 Message = "此Email已註冊",
+                                Result = true
+                        });
+                }
+
+                // 取得縣市
+                [HttpGet("GetLocation")]
+                public async Task<RequestResultOutputDto<object>> GetLocation()
+                {
+                        var locations = await _context.Locations.ToListAsync();
+
+                        var locationsGroupData = locations
+                                .GroupBy(d => new { d.CountyName, d.CountyCode })
+                                .Select((group) => new LocationOutputDto
+                                {
+                                    CountyName = group.Key.CountyName,
+                                    CountyCode = group.Key.CountyCode,
+                                    District = group.Select(d => new DistrictOutputDto
+                                    {
+                                            DistrictName = d.DistrictName,
+                                            DistrictCode = d.DistrictCode,
+                                            PostalCode = d.PostalCode
+                                    }).ToList()
+                                }).ToList();
+
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "",
+                                Result = locationsGroupData
+                        });
+                }
+
+                // 修改個人資料
+                [HttpPut("PutUserProfile")]
+                public async Task<RequestResultOutputDto<object>> PutUserProfile([FromBody] UserProfileInputDto value)
+                {
+                        if (!ModelState.IsValid)
+                        {
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 404,
+                                        Message = "請求格式錯誤",
+                                        Result = false
+                                });
+                        }
+
+                        var userProfile = await _context.UserProfile.Where(x => x.UserNo == value.UserNo).FirstOrDefaultAsync();
+
+                        if (userProfile == null)
+                        {
+                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 404,
+                                        Message = "使用者資料不存在",
+                                        Result = false
+                                });
+                        }
+
+                        userProfile.Name = !string.IsNullOrEmpty(value.Name) ? value.Name : userProfile.Name;
+                        userProfile.Email = !string.IsNullOrEmpty(value.Email) ? value.Email : userProfile.Email;
+                        userProfile.CountyCode = value.CountyCode;
+                        userProfile.DistrictCode = value.DistrictCode;
+                        userProfile.PostalCode = value.PostalCode;
+                        userProfile.Address = !string.IsNullOrEmpty(value.Address) ? value.Address : userProfile.Address;
+                        userProfile.SexCode = value.SexCode;
+                        userProfile.Birthday = value.Birthday != DateTime.MinValue ? value.Birthday : userProfile.Birthday;
+                        userProfile.ModifyDatetime = DateTime.UtcNow;
+
+                        _context.Entry(userProfile).Property(x => x.UserNo).IsModified = false;
+                        await _context.SaveChangesAsync();
+
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "使用者資料更新成功",
                                 Result = true
                         });
                 }

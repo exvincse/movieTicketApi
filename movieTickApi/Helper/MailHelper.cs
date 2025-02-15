@@ -1,10 +1,11 @@
 ﻿using movieTickApi.Models;
 using MimeKit;
 using MailKit.Net.Smtp;
+using movieTickApi.Models.Users;
 
 namespace movieTickApi.Helper
 {
-        public class MailHelper
+    public class MailHelper
         {
                 private readonly SmtpSettings _smtpSettings;
                 private readonly WebDbContext _context;

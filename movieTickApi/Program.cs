@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using movieTickApi.Service;
 using movieTickApi.Helper;
+using movieTickApi.Models.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -67,7 +68,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     {
                             // 在這裡可以攔截請求檢查 Authorization 標頭
                             if (
-                                    !context.Request.Headers.ContainsKey("Authorization") && 
+                                    !context.Request.Headers.ContainsKey("Authorization") &&
                                     !context.Request.Path.StartsWithSegments("/api/User/Login") && 
                                     !context.Request.Path.StartsWithSegments("/api/User/PostSendMail") && 
                                     !context.Request.Path.StartsWithSegments("/api/User/PostValidOtp") &&
@@ -76,6 +77,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                                     !context.Request.Path.StartsWithSegments("/api/User/PostRegister")
                             )
                             {
+                                    if (context.Request.Path.StartsWithSegments("/api/User/ReFreshToken"))
+                                    {
+                                            return Task.CompletedTask;
+                                    }
+
                                     context.NoResult(); // 表示驗證失敗
 
                                     // 過期回給前端isRepeatLogin，讓前端重新導入到登入頁
@@ -91,6 +97,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                                                     isReNewToken = false
                                             }
                                     };
+
+                                    if (string.IsNullOrEmpty(context.Request.Cookies["refreshToken"]) == false)
+                                    {
+                                            errorResponse = new
+                                            {
+                                                    StatusCode = 401,
+                                                    Message = "請重新登入",
+                                                    Result = new
+                                                    {
+                                                            isRepeatLogin = false,
+                                                            isReNewToken = true
+                                                    }
+                                            };
+                                    }
+
                                     return context.Response.WriteAsJsonAsync(errorResponse);
                             }
                             return Task.CompletedTask;

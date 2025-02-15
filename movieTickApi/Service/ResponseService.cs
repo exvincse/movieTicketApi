@@ -1,12 +1,12 @@
-﻿using movieTickApi.Dtos;
+﻿using movieTickApi.Dtos.Output.Users;
 
 namespace movieTickApi.Service
 {
-        public class ResponseService
+    public class ResponseService
         {
-                public RequestResultDto<T> RequestResult<T>(RequestResultDto<object> param)
+                public RequestResultOutputDto<T> RequestResult<T>(RequestResultOutputDto<object> param)
                 {
-                        return new RequestResultDto<T>
+                        return new RequestResultOutputDto<T>
                         {
                                 StatusCode = param.StatusCode,
                                 Message = param.Message,
