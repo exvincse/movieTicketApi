@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using movieTickApi.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -71,11 +70,11 @@ namespace movieTickApi.Service
                         return result.ExpiryDate < DateTime.UtcNow;
                 }
 
-                public async Task<bool> IsAccessTokenRevoked()
+                public async Task<bool?> IsAccessTokenRevoked()
                 {
                         var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                         var result = await _context.Token.FirstOrDefaultAsync(x => x.token == authToken);
-                        if (result == null) return false;
+                        if (result == null) return null;
                         return result.ExpiresAt < DateTime.UtcNow;
                 }
         }

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using movieTickApi.Dtos;
 using movieTickApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,6 +11,7 @@ using movieTickApi.Models.Users;
 using movieTickApi.Dtos.Output;
 using movieTickApi.Dtos.Input.Users;
 using movieTickApi.Dtos.Output.Users;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace movieTickApi.Controllers
@@ -201,10 +201,10 @@ namespace movieTickApi.Controllers
 
                 // 登出
                 [HttpPost("Logout")]
-                [Authorize]
                 public async Task<RequestResultOutputDto<object>> PostLogout()
                 {
                         var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
                         var result = await _context.Token.Where(x => x.token == token && x.IsRevoked == false).FirstOrDefaultAsync();
 
                         if (result != null) {
@@ -300,9 +300,9 @@ namespace movieTickApi.Controllers
                 [Authorize]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> GetUserProfile()
                 {
-                        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        var userId = HttpContext.Items["UserId"] as string;
 
-                        if (userId == null) {
+                        if (userId.IsNullOrEmpty() == true) {
                                 return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
@@ -459,6 +459,7 @@ namespace movieTickApi.Controllers
 
                 // 修改個人資料
                 [HttpPut("PutUserProfile")]
+                [Authorize]
                 public async Task<RequestResultOutputDto<object>> PutUserProfile([FromBody] UserProfileInputDto value)
                 {
                         if (!ModelState.IsValid)
@@ -503,35 +504,5 @@ namespace movieTickApi.Controllers
                                 Result = true
                         });
                 }
-
-                //// 取得otp Email
-                //[HttpGet("GetOtpEmail")]
-                //public RequestResultDto<object> GetOtpEmail()
-                //{
-                //        var email = HttpContext.Session.GetString("Email");
-
-                //        if (email == null)
-                //        {
-                //                return _responseService.RequestResult<object>(new RequestResultDto<object>
-                //                {
-                //                        StatusCode = HttpContext.Response.StatusCode.ToString(),
-                //                        Message = "取得Email錯誤",
-                //                        Result = new
-                //                        {
-                //                                email
-                //                        }
-                //                });
-                //        }
-
-                //        return _responseService.RequestResult<object>(new RequestResultDto<object>
-                //        {
-                //                StatusCode = HttpContext.Response.StatusCode.ToString(),
-                //                Message = "取得Email",
-                //                Result = new
-                //                {
-                //                        email
-                //                }
-                //        });
-                //}
         }
 }

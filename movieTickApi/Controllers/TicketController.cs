@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using movieTickApi.Dtos.Input.Ticket;
 using movieTickApi.Dtos.Output.Ticket;
 using movieTickApi.Dtos.Output.Users;
@@ -9,7 +9,6 @@ using movieTickApi.Helper;
 using movieTickApi.Models;
 using movieTickApi.Models.Ticket;
 using movieTickApi.Service;
-using System.Security.Claims;
 
 namespace movieTickApi.Controllers
 {
@@ -40,7 +39,7 @@ namespace movieTickApi.Controllers
 
                 // 取得票種
                 [HttpGet("GetTicketCategory")]
-                public async Task<RequestResultOutputDto<object>> GetTicketCategory()
+                public async Task<ActionResult<RequestResultOutputDto<object>>> GetTicketCategory()
                 {
                         var result = await _context.TicketCategory
                                 .Select(item => new TicketCategoryDto{
@@ -48,17 +47,17 @@ namespace movieTickApi.Controllers
                                         CategoryName = item.CategoryName,
                                         Cost = item.Cost
                                 }).ToListAsync();
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
                                 Result = result
-                        });
+                        }));
                 }
 
                 // 取得票種語言
                 [HttpGet("GetTicketLanguage")]
-                public async Task<RequestResultOutputDto<object>> GetTicketLanguage()
+                public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> GetTicketLanguage()
                 {
                         var result = await _context.TicketLanguage.Select(item => new TicketLanguageOutputDto
                         {
@@ -66,17 +65,17 @@ namespace movieTickApi.Controllers
                                 CategoryName = item.CategoryName
                         }).ToListAsync();
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
                                 Result = result
-                        });
+                        }));
                 }
 
                 // 取得已選座位
                 [HttpPost("PostSelectSeat")]
-                public async Task<RequestResultOutputDto<object>> PostSelectSeat([FromBody] TicketSeatInputDto value)
+                public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
                 {
                         var seat = await _context.TicketDetail
                                 .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime)
@@ -86,17 +85,18 @@ namespace movieTickApi.Controllers
                                         Seat = y.TicketSeat
                                 }).ToListAsync();
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
                                 Result = seat
-                        });
+                        }));
                 }
 
                 // 送出票卷
                 [HttpPost("PostSealTicket")]
-                public async Task<RequestResultOutputDto<object>> PostSealTicket([FromBody] TicketDetailInputDto value)
+                [Authorize]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PostSealTicket([FromBody] TicketDetailInputDto value)
                 {
                         if (!ModelState.IsValid)
                         {
@@ -107,16 +107,16 @@ namespace movieTickApi.Controllers
                                         Result = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
                                 });
                         }
-                        var createUser = await _context.UserProfile.Where(x => x.Email == User.FindFirstValue(ClaimTypes.Email)).FirstOrDefaultAsync();
+                        var createUser = await _context.UserProfile.Where(x => x.Email == (HttpContext.Items["UserEmail"] as string)).FirstOrDefaultAsync();
 
                         if (createUser == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return BadRequest(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = 400,
                                         Message = "使用者不存在",
                                         Result = false
-                                });
+                                }));
                         }
 
                         var mapTick = new List<TicketDetail>();
@@ -140,12 +140,12 @@ namespace movieTickApi.Controllers
                         await _context.TicketDetail.AddRangeAsync(mapTick);
                         await _context.SaveChangesAsync();
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "送出成功",
                                 Result = true
-                        });
+                        }));
                 }
         }
 }
