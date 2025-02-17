@@ -8,15 +8,13 @@ using System.Security.Claims;
 using movieTickApi.Service;
 using movieTickApi.Helper;
 using movieTickApi.Models.Users;
-using movieTickApi.Dtos.Output;
 using movieTickApi.Dtos.Input.Users;
 using movieTickApi.Dtos.Output.Users;
-using Microsoft.IdentityModel.Tokens;
 
 
 namespace movieTickApi.Controllers
 {
-    [ApiController]
+        [ApiController]
         [Route("api/[controller]")]
         public class UserController : ControllerBase
         {
@@ -43,9 +41,28 @@ namespace movieTickApi.Controllers
                         _mailHelper = mailHelper;
                 }
 
+                // 確認是否有登入
+                [HttpGet("GetIsCheckLogin")]
+                public async Task<RequestResultOutputDto<object>> GetIsCheckLogin()
+                {
+                        var isAccessTokenRevoked = await _tokenService.IsAccessTokenRevoked();
+                        var isTokenRevoked = await _tokenService.IsRefreshTokenRevoked();
+                        var isLogin = true;
+                        if (isAccessTokenRevoked && isTokenRevoked)
+                        {
+                                isLogin = false;
+                        }
+
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = (isLogin == false) ? "未登入" : "已登入",
+                                Result = isLogin
+                        });
+                }
                 // 註冊帳號
                 [HttpPost("PostRegister")]
-                public async Task<RequestResultOutputDto<object>> PostRegister([FromBody] RegisterInputDto value)
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PostRegister([FromBody] RegisterInputDto value)
                 {
                         var passwordHash = BCrypt.Net.BCrypt.HashPassword(value.Password);
 
@@ -116,7 +133,7 @@ namespace movieTickApi.Controllers
                         });
 
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "註冊成功",
@@ -124,12 +141,12 @@ namespace movieTickApi.Controllers
                                 {
                                         accessToken = AccessToken
                                 }
-                        });
+                        }));
                 }
 
                 // 取得登入token
                 [HttpPost("Login")]
-                public async Task<RequestResultOutputDto<object>> PostLogin([FromBody] LoginInputDto value)
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PostLogin([FromBody] LoginInputDto value)
                 {
                         var selectUser= await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
 
@@ -203,41 +220,45 @@ namespace movieTickApi.Controllers
                 [HttpPost("Logout")]
                 public async Task<RequestResultOutputDto<object>> PostLogout()
                 {
-                        var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                        bool isChange = false;
 
-                        var result = await _context.Token.Where(x => x.token == token && x.IsRevoked == false).FirstOrDefaultAsync();
-
-                        if (result != null) {
-                                result.IsRevoked = true;
-                                result.ExpiresAt = DateTime.UtcNow;
-                                _context.Token.Update(result);
-
-
-                                if (string.IsNullOrEmpty(Request.Cookies["refreshToken"]) == false)
-                                {
-                                        var refreshTokens = _context.UserRefreshTokens
-                                            .Where(x =>  x.RefreshToken == Request.Cookies["refreshToken"]);
-                                        _context.UserRefreshTokens.RemoveRange(refreshTokens);
-                                }
-
-                                _context.SaveChanges();
-
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = HttpContext.Response.StatusCode,
-                                        Message = "已登出",
-                                        Result = null
-                                });
-                        } 
-                        else
+                        var refreshToken = Request.Cookies["refreshToken"];
+                        if (string.IsNullOrEmpty(refreshToken) == false)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                var refreshTokens = await _context.UserRefreshTokens.Where(x => x.RefreshToken == Request.Cookies["refreshToken"]).FirstOrDefaultAsync();
+
+                                if (refreshTokens != null)
                                 {
-                                        StatusCode = HttpContext.Response.StatusCode,
-                                        Message = "請重新登入",
-                                        Result = null
-                                });
+                                        _context.UserRefreshTokens.Remove(refreshTokens);
+                                        isChange = true;
+                                }
                         }
+
+                        var accessToken = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                        if (string.IsNullOrEmpty(accessToken) == false) {
+                                var result = await _context.Token.Where(x => x.token == accessToken && x.IsRevoked == false).FirstOrDefaultAsync();
+
+                                if (result != null)
+                                {
+                                        result.IsRevoked = true;
+                                        result.ExpiresAt = DateTime.UtcNow;
+                                        _context.Token.Update(result);
+                                        isChange = true;
+                                }
+                        }
+
+                        if (isChange == true)
+                        {
+                                _context.SaveChanges();
+                        }
+
+                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "已登出",
+                                Result = true
+                        });
                 }
 
                 // 刷新token
@@ -302,12 +323,12 @@ namespace movieTickApi.Controllers
                 {
                         var userId = HttpContext.Items["UserId"] as string;
 
-                        if (userId.IsNullOrEmpty() == true) {
+                        if (string.IsNullOrEmpty(userId) == true) {
                                 return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
-                                        Result = null
+                                        Result = false
                                 });
                         }
 
@@ -319,7 +340,7 @@ namespace movieTickApi.Controllers
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "找不到資料",
-                                        Result = null
+                                        Result = false
                                 });
                         }
                         else {

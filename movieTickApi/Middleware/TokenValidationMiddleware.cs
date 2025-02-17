@@ -26,24 +26,42 @@ public class TokenValidationMiddleware
                         return;
                 }
 
-                if (string.IsNullOrEmpty(context.Request.Cookies["refreshToken"]))
+                if (string.IsNullOrEmpty(context.Request.Cookies["refreshToken"]) == true)
                 {
                         await UnauthorizedResponseHandle(context, "請重新登入", true, false);
                         return;
                 }
 
-                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-                if (string.IsNullOrEmpty(token))
+
+                if (string.IsNullOrEmpty(token) == true)
                 {
                         // 判斷http  cookie設置refresh token是否過期
-                        var IsTokenRevoked = await tokenService.IsTokenRevokedAsync();
-                        if (IsTokenRevoked == true)
+                        var IsRefreshTokenRevoked = await tokenService.IsRefreshTokenRevoked();
+                        if (IsRefreshTokenRevoked == true)
                         {
                                 await UnauthorizedResponseHandle(context, "請重新登入", true, false);
                                 return;
                         }
                         else
+                        {
+                                await UnauthorizedResponseHandle(context, "token已過期", false, true);
+                                return;
+                        }
+                } 
+                else
+                {
+                        var IsAccessTokenRevoked = await tokenService.IsAccessTokenRevoked();
+                        var IsRefreshTokenRevoked = await tokenService.IsRefreshTokenRevoked();
+
+                        if (IsRefreshTokenRevoked == true)
+                        {
+                                await UnauthorizedResponseHandle(context, "請重新登入", true, false);
+                                return;
+                        }
+
+                        if (IsAccessTokenRevoked == true)
                         {
                                 await UnauthorizedResponseHandle(context, "token已過期", false, true);
                                 return;
@@ -55,7 +73,7 @@ public class TokenValidationMiddleware
                         var tokenHandler = new JwtSecurityTokenHandler();
                         var key = Encoding.UTF8.GetBytes(_configuration["JWT:KEY"]);
 
-                        tokenHandler.ValidateToken(token, new TokenValidationParameters
+                        var parameters = new TokenValidationParameters
                         {
                                 ValidateIssuer = true,
                                 ValidIssuer = _configuration["Jwt:Issuer"],
@@ -63,35 +81,24 @@ public class TokenValidationMiddleware
                                 ValidAudience = _configuration["Jwt:Audience"],
                                 ValidateLifetime = true,
                                 IssuerSigningKey = new SymmetricSecurityKey(key)
-                        }, out SecurityToken validatedToken);
+                        };
 
-                        var jwtToken = validatedToken as JwtSecurityToken;
+                        var jwtToken = tokenHandler.ValidateToken(token, parameters, out _); 
 
                         if (jwtToken == null)
                         {
-                                await UnauthorizedResponseHandle(context, "無效的 Token", true, false);
+                                await UnauthorizedResponseHandle(context, "無效的token", true, false);
                                 return;
                         };
+
+                        context.User = jwtToken;
 
                         var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
                         context.Items["UserId"] = userId?.Value;
                 }
                 catch (SecurityTokenExpiredException)
                 {
-                        var IsTokenRevoked = await tokenService.IsAccessTokenRevoked();
-                        if (IsTokenRevoked == null)
-                        {
-                                await UnauthorizedResponseHandle(context, "無效的 Token", true, false);
-                        }
-                        else if (IsTokenRevoked == false)
-                        {
-                                await UnauthorizedResponseHandle(context, "token已過期", false, true);
-                        }
-                        return;
-                }
-                catch (Exception)
-                {
-                        await UnauthorizedResponseHandle(context, "無效的 Token", true, false);
+                        await UnauthorizedResponseHandle(context, "無效的token", true, false);
                         return;
                 }
 

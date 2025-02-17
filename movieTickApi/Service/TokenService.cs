@@ -62,20 +62,20 @@ namespace movieTickApi.Service
                         return jwtUser;
                 }
 
-                public async Task<bool>  IsTokenRevokedAsync()
+                public async Task<bool> IsRefreshTokenRevoked()
                 {
                         var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];
                         var result = await _context.UserRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
-                        if (result == null) return false;
-                        return result.ExpiryDate < DateTime.UtcNow;
+                        if (result == null) return true;
+                        return result.ExpiryDate.ToUniversalTime() > DateTime.UtcNow;
                 }
 
-                public async Task<bool?> IsAccessTokenRevoked()
+                public async Task<bool> IsAccessTokenRevoked()
                 {
                         var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                         var result = await _context.Token.FirstOrDefaultAsync(x => x.token == authToken);
-                        if (result == null) return null;
-                        return result.ExpiresAt < DateTime.UtcNow;
+                        if (result == null) return true;
+                        return (result.ExpiresAt.ToUniversalTime() > DateTime.UtcNow) || result.IsRevoked == true;
                 }
         }
 }

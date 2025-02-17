@@ -7,16 +7,6 @@ using movieTickApi.Models.Users;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-//builder.Services.AddDistributedMemoryCache();
-//builder.Services.AddSession(options =>
-//{
-//        options.IdleTimeout = TimeSpan.FromMinutes(30); // 設定 Session 30 分鐘有效
-//        options.Cookie.HttpOnly = true; // 防止 XSS 攻擊
-//        options.Cookie.IsEssential = true; // GDPR 規範下仍然可用
-//        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // 只有 HTTPS 下才會傳遞
-//        options.Cookie.SameSite = SameSiteMode.None; // 避免瀏覽器阻擋 Cookie
-//});
-
 builder.Services.AddCors(options =>
 {
         options.AddPolicy("AllowSpecificOrigins", builder =>

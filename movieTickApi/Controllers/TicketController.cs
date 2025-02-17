@@ -147,5 +147,28 @@ namespace movieTickApi.Controllers
                                 Result = true
                         }));
                 }
+                
+                // 取得個人票券
+                [HttpGet("GetPersonalTicketList")]
+                [Authorize]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> GetPersonalTicketList([FromQuery] TicketPersonalInputDto value)
+                {
+                        var result = await _context.TicketDetail.Where(x => x.CreateUserNo == value.UserNo)
+                                .Select(y => new TicketPersonalOutputDto
+                                {
+                                        TicketDate = y.TicketDate,
+                                        TicketCategoryName = y.TicketCategoryName,
+                                        TicketLanguageName = y.TicketLanguageName,
+                                        Column = y.TicketColumn,
+                                        Seat = y.TicketSeat
+                                }).ToListAsync();
+
+                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "",
+                                Result = result
+                        }));
+                }
         }
 }
