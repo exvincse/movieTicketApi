@@ -1,6 +1,4 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using movieTickApi.Service;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -26,16 +24,18 @@ public class TokenValidationMiddleware
                         return;
                 }
 
-                if (string.IsNullOrEmpty(context.Request.Cookies["refreshToken"]) == true)
+                var refreshToken = context.Request.Cookies["refreshToken"];
+
+                if (string.IsNullOrEmpty(refreshToken) == true)
                 {
                         await UnauthorizedResponseHandle(context, "請重新登入", true, false);
                         return;
                 }
 
-                var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var acccessToken = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
 
-                if (string.IsNullOrEmpty(token) == true)
+                if (string.IsNullOrEmpty(acccessToken) == true)
                 {
                         // 判斷http  cookie設置refresh token是否過期
                         var IsRefreshTokenRevoked = await tokenService.IsRefreshTokenRevoked();
@@ -70,26 +70,19 @@ public class TokenValidationMiddleware
 
                 try
                 {
-                        var tokenHandler = new JwtSecurityTokenHandler();
-                        var key = Encoding.UTF8.GetBytes(_configuration["JWT:KEY"]);
-
-                        var parameters = new TokenValidationParameters
-                        {
-                                ValidateIssuer = true,
-                                ValidIssuer = _configuration["Jwt:Issuer"],
-                                ValidateAudience = true,
-                                ValidAudience = _configuration["Jwt:Audience"],
-                                ValidateLifetime = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(key)
-                        };
-
-                        var jwtToken = tokenHandler.ValidateToken(token, parameters, out _); 
+                        var jwtToken =  tokenService.GetJwtToken(acccessToken);
 
                         if (jwtToken == null)
                         {
                                 await UnauthorizedResponseHandle(context, "無效的token", true, false);
                                 return;
                         };
+
+                        var jwtTokenValid = await tokenService.IsRefreshFkAccessToken(acccessToken, refreshToken);
+                        if (jwtTokenValid == false) {
+                                await UnauthorizedResponseHandle(context, "無效的token", true, false);
+                                return;
+                        }
 
                         context.User = jwtToken;
 

@@ -107,7 +107,8 @@ namespace movieTickApi.Controllers
                                         Result = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
                                 });
                         }
-                        var createUser = await _context.UserProfile.Where(x => x.Email == (HttpContext.Items["UserEmail"] as string)).FirstOrDefaultAsync();
+
+                        var createUser = await _context.UserProfile.Where(x => x.UserId == Guid.Parse(HttpContext.Items["UserId"] as string)).FirstOrDefaultAsync();
 
                         if (createUser == null)
                         {

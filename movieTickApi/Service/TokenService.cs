@@ -42,24 +42,38 @@ namespace movieTickApi.Service
                         return Guid.NewGuid().ToString();
                 }
 
-                public ClaimsPrincipal GetPrincipalFromToken()
+                public ClaimsPrincipal GetJwtToken(string token)
                 {
-                        var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                         var tokenHandler = new JwtSecurityTokenHandler();
-                        SecurityToken validatedToken;
+                        var key = Encoding.UTF8.GetBytes(_configuration["JWT:KEY"]);
 
-                        var jwtUser = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                        var parameters = new TokenValidationParameters
                         {
                                 ValidateIssuer = true,
                                 ValidIssuer = _configuration["Jwt:Issuer"],
                                 ValidateAudience = true,
                                 ValidAudience = _configuration["Jwt:Audience"],
                                 ValidateLifetime = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:KEY"])),
-                                ClockSkew = TimeSpan.Zero
-                        }, out validatedToken);
+                                IssuerSigningKey = new SymmetricSecurityKey(key)
+                        };
 
-                        return jwtUser;
+                        return tokenHandler.ValidateToken(token, parameters, out _); 
+                }
+
+                public async Task<bool> IsRefreshFkAccessToken(string accessToken, string refreshToken)
+                {
+                        var refreshTokenResult = await _context.UserRefreshTokens
+                            .Where(y => y.RefreshToken == refreshToken)
+                            .Select(y => y.UserId)
+                            .FirstOrDefaultAsync();
+
+                        if (refreshTokenResult == default) return false;
+
+                        var accessTokenResult = await _context.Token
+                            .Where(t => t.token == accessToken && t.UserId == refreshTokenResult)
+                            .FirstOrDefaultAsync();
+
+                        return accessTokenResult != null;
                 }
 
                 public async Task<bool> IsRefreshTokenRevoked()
