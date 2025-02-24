@@ -26,6 +26,8 @@ builder.Services.AddDbContext<WebDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
+builder.Services.AddHttpClient();
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

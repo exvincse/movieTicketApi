@@ -4,13 +4,13 @@ namespace movieTickApi.Service
 {
     public class ResponseService
         {
-                public RequestResultOutputDto<T> RequestResult<T>(RequestResultOutputDto<object> param)
+                public RequestResultOutputDto<T> RequestResult<T>(RequestResultOutputDto<T> param)
                 {
                         return new RequestResultOutputDto<T>
                         {
                                 StatusCode = param.StatusCode,
                                 Message = param.Message,
-                                Result = (T)param.Result
+                                Result = param.Result
                         };
                 }
         }

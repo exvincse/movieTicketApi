@@ -53,7 +53,7 @@ namespace movieTickApi.Controllers
                                 isLogin = false;
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = (isLogin == false) ? "未登入" : "已登入",
@@ -133,7 +133,7 @@ namespace movieTickApi.Controllers
                         });
 
 
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "註冊成功",
@@ -151,7 +151,7 @@ namespace movieTickApi.Controllers
                         var selectUser= await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
 
                         if (selectUser == null || !BCrypt.Net.BCrypt.Verify(value.Password, selectUser.Password)) {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "帳號密碼錯誤",
@@ -204,7 +204,7 @@ namespace movieTickApi.Controllers
                                 });
 
 
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
@@ -253,7 +253,7 @@ namespace movieTickApi.Controllers
                                 _context.SaveChanges();
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "已登出",
@@ -269,7 +269,7 @@ namespace movieTickApi.Controllers
 
                         if (reFreshToken == null || reFreshToken.ExpiryDate < DateTime.UtcNow)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
@@ -304,7 +304,7 @@ namespace movieTickApi.Controllers
                                 _context.Token.Add(addAccessToken);
                                 await _context.SaveChangesAsync();
 
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
@@ -324,7 +324,7 @@ namespace movieTickApi.Controllers
                         var userId = HttpContext.Items["UserId"] as string;
 
                         if (string.IsNullOrEmpty(userId) == true) {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "請重新登入",
@@ -336,7 +336,7 @@ namespace movieTickApi.Controllers
 
                         if (result == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "找不到資料",
@@ -344,7 +344,7 @@ namespace movieTickApi.Controllers
                                 });
                         }
                         else {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "",
@@ -376,7 +376,7 @@ namespace movieTickApi.Controllers
 
                         if (mailHelper == true)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "發送成功",
@@ -384,7 +384,7 @@ namespace movieTickApi.Controllers
                                 });
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "發送失敗",
@@ -403,7 +403,7 @@ namespace movieTickApi.Controllers
 
                         if(otp == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "驗證碼輸入錯誤或過期",
@@ -418,7 +418,7 @@ namespace movieTickApi.Controllers
 
                         //HttpContext.Session.Remove("Email");
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "驗證成功",
@@ -434,7 +434,7 @@ namespace movieTickApi.Controllers
 
                         if (validEmail == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "此Email尚未註冊",
@@ -442,7 +442,7 @@ namespace movieTickApi.Controllers
                                 });
                         }
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "此Email已註冊",
@@ -470,7 +470,7 @@ namespace movieTickApi.Controllers
                                     }).ToList()
                                 }).ToList();
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
@@ -485,7 +485,7 @@ namespace movieTickApi.Controllers
                 {
                         if (!ModelState.IsValid)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = 404,
                                         Message = "請求格式錯誤",
@@ -497,7 +497,7 @@ namespace movieTickApi.Controllers
 
                         if (userProfile == null)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = 404,
                                         Message = "使用者資料不存在",
@@ -518,7 +518,7 @@ namespace movieTickApi.Controllers
                         _context.Entry(userProfile).Property(x => x.UserNo).IsModified = false;
                         await _context.SaveChangesAsync();
 
-                        return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "使用者資料更新成功",

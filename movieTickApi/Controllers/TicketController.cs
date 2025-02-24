@@ -12,7 +12,7 @@ using movieTickApi.Service;
 
 namespace movieTickApi.Controllers
 {
-    [Route("api/[controller]")]
+        [Route("api/[controller]")]
         [ApiController]
         public class TicketController : ControllerBase
         {
@@ -47,7 +47,7 @@ namespace movieTickApi.Controllers
                                         CategoryName = item.CategoryName,
                                         Cost = item.Cost
                                 }).ToListAsync();
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
@@ -65,7 +65,7 @@ namespace movieTickApi.Controllers
                                 CategoryName = item.CategoryName
                         }).ToListAsync();
 
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
@@ -85,7 +85,7 @@ namespace movieTickApi.Controllers
                                         Seat = y.TicketSeat
                                 }).ToListAsync();
 
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
@@ -100,7 +100,7 @@ namespace movieTickApi.Controllers
                 {
                         if (!ModelState.IsValid)
                         {
-                                return _responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = 400,
                                         Message = "請求參數不合法",
@@ -112,7 +112,7 @@ namespace movieTickApi.Controllers
 
                         if (createUser == null)
                         {
-                                return BadRequest(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                                return BadRequest(_responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = 400,
                                         Message = "使用者不存在",
@@ -141,7 +141,7 @@ namespace movieTickApi.Controllers
                         await _context.TicketDetail.AddRangeAsync(mapTick);
                         await _context.SaveChangesAsync();
 
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "送出成功",
@@ -164,7 +164,7 @@ namespace movieTickApi.Controllers
                                         Seat = y.TicketSeat
                                 }).ToListAsync();
 
-                        return Ok(_responseService.RequestResult<object>(new RequestResultOutputDto<object>
+                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
