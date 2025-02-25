@@ -68,7 +68,7 @@ namespace movieTickApi.Controllers
 
                         var addUser = new User
                         {
-                                Id = new Guid(),
+                                Id = Guid.NewGuid(),
                                 Email = value.Email,
                                 Password = passwordHash,
                                 CreateDatetime = DateTime.UtcNow,
@@ -450,6 +450,37 @@ namespace movieTickApi.Controllers
                         });
                 }
 
+                // 修改密碼
+                [HttpPut("PutResetPassword")]
+                public async Task<RequestResultOutputDto<object>> PutResetPassword([FromBody] RegisterInputDto value)
+                {
+                        var user = await _context.User.Where(x => x.Email == value.Email).FirstOrDefaultAsync();
+
+                        if (user == null)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = HttpContext.Response.StatusCode,
+                                        Message = "此Email尚未註冊",
+                                        Result = false
+                                });
+                        }
+
+                        var passwordHash = BCrypt.Net.BCrypt.HashPassword(value.Password);
+
+                        user.Password = passwordHash;
+                        user.ModifyDatetime = DateTime.UtcNow;
+                        _context.User.Update(user);
+                        await _context.SaveChangesAsync();
+
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "修改成功",
+                                Result = true
+                        });
+                }
+
                 // 取得縣市
                 [HttpGet("GetLocation")]
                 public async Task<RequestResultOutputDto<object>> GetLocation()
@@ -515,7 +546,6 @@ namespace movieTickApi.Controllers
                         userProfile.Birthday = value.Birthday != DateTime.MinValue ? value.Birthday : userProfile.Birthday;
                         userProfile.ModifyDatetime = DateTime.UtcNow;
 
-                        _context.Entry(userProfile).Property(x => x.UserNo).IsModified = false;
                         await _context.SaveChangesAsync();
 
                         return _responseService.RequestResult(new RequestResultOutputDto<object>
