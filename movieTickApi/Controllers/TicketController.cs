@@ -154,7 +154,15 @@ namespace movieTickApi.Controllers
                 [Authorize]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> GetPersonalTicketList([FromQuery] TicketPersonalInputDto value)
                 {
-                        var result = await _context.TicketDetail.Where(x => x.CreateUserNo == value.UserNo)
+                        var ticketDetailQuery =  _context.TicketDetail.Where(x => x.CreateUserNo == value.UserNo);
+                        var totalCount = await ticketDetailQuery.CountAsync();
+
+                        int pageIndex = value.PageIndex < 1 ? 1 : value.PageIndex;
+                        int pageSize = value.PageSize < 1 ? 10 : value.PageSize;
+
+                        var result = await ticketDetailQuery
+                                .Skip((pageIndex - 1) * pageSize)
+                                .Take(pageSize)
                                 .Select(y => new TicketPersonalOutputDto
                                 {
                                         TicketDate = y.TicketDate,
@@ -168,7 +176,13 @@ namespace movieTickApi.Controllers
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
-                                Result = result
+                                Result = new
+                                {
+                                        TotalPage = Math.Ceiling((double)totalCount / pageSize),
+                                        PageIndex = value.PageIndex,
+                                        PageSize = value.PageSize,
+                                        Result = result
+                                }
                         }));
                 }
         }
