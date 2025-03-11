@@ -13,8 +13,8 @@
                 public string? Address { get; set; }
                 public string? SexCode { get; set; }
                 public DateTime? Birthday { get; set; }
-                public DateTime CreateDatetime { get; set; }
-                public DateTime ModifyDatetime { get; set; }
+                public DateTime CreateDateTime { get; set; }
+                public DateTime ModifyDateTime { get; set; }
                 public User User { get; set; }
         }
 }

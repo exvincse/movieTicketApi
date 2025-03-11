@@ -7,7 +7,7 @@
                 public required string Otp { get; set; }
                 public DateTime ExpirationTime { get; set; }
                 public bool IsUsed { get; set; }
-                public DateTime CreatedAt { get; set; }
-                public DateTime UpdatedAt { get; set; }
+                public DateTime CreateDateTime { get; set; }
+                public DateTime UpdateDateTime { get; set; }
         }
 }

@@ -28,7 +28,7 @@ namespace movieTickApi.Service
                         var context = scope.ServiceProvider.GetRequiredService<WebDbContext>();
 
                         var expiredTokens = await context.Token
-                            .Where(t => t.ExpiresAt < DateTime.UtcNow && !t.IsRevoked).ToListAsync();
+                            .Where(t => t.ExpiryDateTime < DateTime.UtcNow && !t.IsRevoked).ToListAsync();
 
                         foreach (var token in expiredTokens)
                         {

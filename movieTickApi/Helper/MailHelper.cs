@@ -56,8 +56,8 @@ namespace movieTickApi.Helper
                                         Otp = message.Otp,
                                         ExpirationTime = DateTime.UtcNow.AddMinutes(4),
                                         IsUsed = false,
-                                        CreatedAt = DateTime.UtcNow,
-                                        UpdatedAt = DateTime.UtcNow
+                                        CreateDateTime = DateTime.UtcNow,
+                                        UpdateDateTime = DateTime.UtcNow
                                 };
 
                                 _context.OtpVerification.Add(otp);

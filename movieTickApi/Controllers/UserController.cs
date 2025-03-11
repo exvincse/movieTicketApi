@@ -79,8 +79,8 @@ namespace movieTickApi.Controllers
                                 Id = Guid.NewGuid(),
                                 Email = value.Email,
                                 Password = passwordHash,
-                                CreateDatetime = DateTime.UtcNow,
-                                ModifyDatetime = DateTime.UtcNow,
+                                CreateDateTime = DateTime.UtcNow,
+                                ModifyDateTime = DateTime.UtcNow,
                         };
 
                         addUser.UserProfile = new List<UserProfile>
@@ -90,8 +90,8 @@ namespace movieTickApi.Controllers
                                         Id = Guid.NewGuid(),
                                         Name = "NO." + GenerateRandomString(6),
                                         Email = value.Email,
-                                        CreateDatetime = DateTime.UtcNow,
-                                        ModifyDatetime = DateTime.UtcNow,
+                                        CreateDateTime = DateTime.UtcNow,
+                                        ModifyDateTime = DateTime.UtcNow,
                                         UserId = addUser.Id
                                 }
                         };
@@ -113,9 +113,9 @@ namespace movieTickApi.Controllers
                         {
                                 Id = Guid.NewGuid(),
                                 UserId = addUser.Id,
-                                token = AccessToken,
-                                CreatedAt = DateTime.UtcNow,
-                                ExpiresAt = DateTime.UtcNow.AddMinutes(60),
+                                AccessToken = AccessToken,
+                                CreateDateTime = DateTime.UtcNow,
+                                ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
                                 IsRevoked = false
                         };
 
@@ -123,7 +123,7 @@ namespace movieTickApi.Controllers
                         {
                                 UserId = addUser.Id,
                                 RefreshToken = RefreshToken,
-                                ExpiryDate = DateTime.UtcNow.AddMinutes(120)
+                                ExpiryDateTime = DateTime.UtcNow.AddMinutes(120)
                         };
 
                         _context.Token.Add(addAccessToken);
@@ -186,9 +186,9 @@ namespace movieTickApi.Controllers
                                 {
                                         Id = Guid.NewGuid(),
                                         UserId = selectUser.Id,
-                                        token = AccessToken,
-                                        CreatedAt = DateTime.UtcNow,
-                                        ExpiresAt = DateTime.UtcNow.AddMinutes(60),
+                                        AccessToken = AccessToken,
+                                        CreateDateTime = DateTime.UtcNow,
+                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
                                         IsRevoked = false
                                 };
 
@@ -196,7 +196,7 @@ namespace movieTickApi.Controllers
                                 {
                                         UserId = selectUser.Id,
                                         RefreshToken = RefreshToken,
-                                        ExpiryDate = DateTime.UtcNow.AddMinutes(120)
+                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(120)
                                 };
 
                                 _context.Token.Add(addAccessToken);
@@ -248,12 +248,12 @@ namespace movieTickApi.Controllers
 
                         if (string.IsNullOrEmpty(accessToken) == false)
                         {
-                                var result = await _context.Token.Where(x => x.token == accessToken && x.IsRevoked == false).FirstOrDefaultAsync();
+                                var result = await _context.Token.Where(x => x.AccessToken == accessToken && x.IsRevoked == false).FirstOrDefaultAsync();
 
                                 if (result != null)
                                 {
                                         result.IsRevoked = true;
-                                        result.ExpiresAt = DateTime.UtcNow;
+                                        result.ExpiryDateTime = DateTime.UtcNow;
                                         _context.Token.Update(result);
                                         isChange = true;
                                 }
@@ -278,7 +278,7 @@ namespace movieTickApi.Controllers
                 {
                         var reFreshToken = await _context.UserRefreshTokens.Where(x => x.RefreshToken == Request.Cookies["refreshToken"]).FirstOrDefaultAsync();
 
-                        if (reFreshToken == null || reFreshToken.ExpiryDate < DateTime.UtcNow)
+                        if (reFreshToken == null || reFreshToken.ExpiryDateTime < DateTime.UtcNow)
                         {
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
@@ -306,9 +306,9 @@ namespace movieTickApi.Controllers
                                 {
                                         Id = Guid.NewGuid(),
                                         UserId = user.Id,
-                                        token = AccessToken,
-                                        CreatedAt = DateTime.UtcNow,
-                                        ExpiresAt = DateTime.UtcNow.AddMinutes(60),
+                                        AccessToken = AccessToken,
+                                        CreateDateTime = DateTime.UtcNow,
+                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
                                         IsRevoked = false
                                 };
 
@@ -425,7 +425,7 @@ namespace movieTickApi.Controllers
                         }
 
                         otp.IsUsed = true;
-                        otp.UpdatedAt = DateTime.UtcNow;
+                        otp.UpdateDateTime = DateTime.UtcNow;
                         _context.OtpVerification.Update(otp);
                         await _context.SaveChangesAsync();
 
@@ -482,7 +482,7 @@ namespace movieTickApi.Controllers
                         var passwordHash = BCrypt.Net.BCrypt.HashPassword(value.Password);
 
                         user.Password = passwordHash;
-                        user.ModifyDatetime = DateTime.UtcNow;
+                        user.ModifyDateTime = DateTime.UtcNow;
                         _context.User.Update(user);
                         await _context.SaveChangesAsync();
 
@@ -557,7 +557,7 @@ namespace movieTickApi.Controllers
                         userProfile.Address = !string.IsNullOrEmpty(value.Address) ? value.Address : userProfile.Address;
                         userProfile.SexCode = value.SexCode;
                         userProfile.Birthday = value.Birthday != DateTime.MinValue ? value.Birthday : userProfile.Birthday;
-                        userProfile.ModifyDatetime = DateTime.UtcNow;
+                        userProfile.ModifyDateTime = DateTime.UtcNow;
 
                         await _context.SaveChangesAsync();
 

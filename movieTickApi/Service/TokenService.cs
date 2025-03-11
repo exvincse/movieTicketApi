@@ -71,7 +71,7 @@ namespace movieTickApi.Service
                         if (refreshTokenResult == default) return false;
 
                         var accessTokenResult = await _context.Token
-                            .Where(t => t.token == accessToken && t.UserId == refreshTokenResult)
+                            .Where(t => t.AccessToken == accessToken && t.UserId == refreshTokenResult)
                             .FirstOrDefaultAsync();
 
                         return accessTokenResult != null;
@@ -82,15 +82,15 @@ namespace movieTickApi.Service
                         var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];
                         var result = await _context.UserRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
                         if (result == null) return true;
-                        return result.ExpiryDate.ToUniversalTime() < DateTime.UtcNow;
+                        return result.ExpiryDateTime.ToUniversalTime() < DateTime.UtcNow;
                 }
 
                 public async Task<bool> IsAccessTokenRevoked()
                 {
                         var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                        var result = await _context.Token.FirstOrDefaultAsync(x => x.token == authToken);
+                        var result = await _context.Token.FirstOrDefaultAsync(x => x.AccessToken == authToken);
                         if (result == null) return true;
-                        return (result.ExpiresAt.ToUniversalTime() < DateTime.UtcNow) || result.IsRevoked == true;
+                        return (result.ExpiryDateTime.ToUniversalTime() < DateTime.UtcNow) || result.IsRevoked == true;
                 }
         }
 }
