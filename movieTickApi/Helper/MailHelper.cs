@@ -1,11 +1,11 @@
-﻿using movieTickApi.Models;
+﻿using MailKit.Net.Smtp;
 using MimeKit;
-using MailKit.Net.Smtp;
+using movieTickApi.Models;
 using movieTickApi.Models.Users;
 
 namespace movieTickApi.Helper
 {
-    public class MailHelper
+        public class MailHelper
         {
                 private readonly SmtpSettings _smtpSettings;
                 private readonly WebDbContext _context;
@@ -20,8 +20,8 @@ namespace movieTickApi.Helper
 
                 public class EmailMessageResult
                 {
-                        public MimeMessage Message { get; set; }
-                        public string Otp { get; set; }
+                        public required MimeMessage Message { get; set; }
+                        public required string Otp { get; set; }
                 }
 
                 public async Task<bool> SendMail(EmailRequest emailRequest)
@@ -31,7 +31,7 @@ namespace movieTickApi.Helper
                         if (mail.Count > 0)
                         {
                                 _context.OtpVerification.RemoveRange(mail);
-                               await _context.SaveChangesAsync();
+                                await _context.SaveChangesAsync();
                         }
 
                         var message = CreateEmailMessage(emailRequest);
@@ -85,11 +85,6 @@ namespace movieTickApi.Helper
                         message.From.Add(new MailboxAddress(_smtpSettings.SenderName, _smtpSettings.SenderEmail));
                         message.To.Add(new MailboxAddress(emailRequest.ToName, emailRequest.ToEmail));
                         message.Subject = "驗證Email";
-
-                        //var message = new MimeMessage();
-                        //message.From.Add(new MailboxAddress(_smtpSettings.SenderName, _smtpSettings.SenderEmail));
-                        //message.To.Add(new MailboxAddress("yang", "exvincse@gmail.com"));
-                        //message.Subject = "驗證Email";
 
                         var otp = new Random().Next(100000, 999999).ToString();
 

@@ -1,7 +1,7 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 using movieTickApi.Service;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 public class TokenValidationMiddleware
 {
@@ -19,7 +19,8 @@ public class TokenValidationMiddleware
 
                 var endpoint = context.GetEndpoint();
                 var authorizeAttribute = endpoint?.Metadata?.GetMetadata<AuthorizeAttribute>();
-                if (authorizeAttribute == null) {
+                if (authorizeAttribute == null)
+                {
                         await _next(context);
                         return;
                 }
@@ -49,7 +50,7 @@ public class TokenValidationMiddleware
                                 await UnauthorizedResponseHandle(context, "token已過期", false, true);
                                 return;
                         }
-                } 
+                }
                 else
                 {
                         var IsAccessTokenRevoked = await tokenService.IsAccessTokenRevoked();
@@ -70,7 +71,7 @@ public class TokenValidationMiddleware
 
                 try
                 {
-                        var jwtToken =  tokenService.GetJwtToken(acccessToken);
+                        var jwtToken = tokenService.GetJwtToken(acccessToken);
 
                         if (jwtToken == null)
                         {
@@ -79,7 +80,8 @@ public class TokenValidationMiddleware
                         };
 
                         var jwtTokenValid = await tokenService.IsRefreshFkAccessToken(acccessToken, refreshToken);
-                        if (jwtTokenValid == false) {
+                        if (jwtTokenValid == false)
+                        {
                                 await UnauthorizedResponseHandle(context, "無效的token", true, false);
                                 return;
                         }

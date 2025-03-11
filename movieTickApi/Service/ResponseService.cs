@@ -2,7 +2,7 @@
 
 namespace movieTickApi.Service
 {
-    public class ResponseService
+        public class ResponseService
         {
                 public RequestResultOutputDto<T> RequestResult<T>(RequestResultOutputDto<T> param)
                 {

@@ -1,5 +1,5 @@
-﻿using movieTickApi.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using movieTickApi.Models;
 
 namespace movieTickApi.Service
 {
