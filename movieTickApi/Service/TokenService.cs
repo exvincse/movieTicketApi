@@ -30,7 +30,7 @@ namespace movieTickApi.Service
                                 issuer: _configuration["JWT:Issuer"],
                                 audience: _configuration["JWT:Audience"],
                                 claims: claim,
-                                expires: DateTime.UtcNow.AddMinutes(5),
+                                expires: DateTime.UtcNow.AddMinutes(60),
                                 signingCredentials: new SigningCredentials(jwtKey, SecurityAlgorithms.HmacSha256)
                         );
 
@@ -54,10 +54,11 @@ namespace movieTickApi.Service
                                 ValidateAudience = true,
                                 ValidAudience = _configuration["Jwt:Audience"],
                                 ValidateLifetime = true,
-                                IssuerSigningKey = new SymmetricSecurityKey(key)
+                                IssuerSigningKey = new SymmetricSecurityKey(key),
+                                ClockSkew = TimeSpan.FromMinutes(5)
                         };
 
-                        return tokenHandler.ValidateToken(token, parameters, out _); 
+                        return tokenHandler.ValidateToken(token, parameters, out _);
                 }
 
                 public async Task<bool> IsRefreshFkAccessToken(string accessToken, string refreshToken)

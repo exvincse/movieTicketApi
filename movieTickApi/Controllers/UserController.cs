@@ -2,14 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using movieTickApi.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using movieTickApi.Service;
-using movieTickApi.Helper;
-using movieTickApi.Models.Users;
 using movieTickApi.Dtos.Input.Users;
 using movieTickApi.Dtos.Output.Users;
+using movieTickApi.Helper;
+using movieTickApi.Models;
+using movieTickApi.Models.Users;
+using movieTickApi.Service;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
 namespace movieTickApi.Controllers
@@ -27,8 +27,8 @@ namespace movieTickApi.Controllers
 
                 public UserController(
                         WebDbContext context,
-                        IMapper mapper, 
-                        IConfiguration  configuration, 
+                        IMapper mapper,
+                        IConfiguration configuration,
                         TokenService tokenService,
                         ResponseService responseService,
                         MailHelper mailHelper)
@@ -39,6 +39,14 @@ namespace movieTickApi.Controllers
                         _tokenService = tokenService;
                         _responseService = responseService;
                         _mailHelper = mailHelper;
+                }
+
+                static string GenerateRandomString(int length)
+                {
+                        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                        Random random = new Random();
+
+                        return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
                 }
 
                 // 確認是否有登入
@@ -73,28 +81,28 @@ namespace movieTickApi.Controllers
                                 Password = passwordHash,
                                 CreateDatetime = DateTime.UtcNow,
                                 ModifyDatetime = DateTime.UtcNow,
-                                UserProfile = new List<UserProfile>
+                        };
+
+                        addUser.UserProfile = new List<UserProfile>
+                        {
+                                new UserProfile
                                 {
-                                        new UserProfile
-                                        {
-                                                Id = Guid.NewGuid(),
-                                                Name = value.Email.Split('@')[0],
-                                                Email = value.Email,
-                                                CreateDatetime = DateTime.UtcNow,
-                                                ModifyDatetime = DateTime.UtcNow,
-                                        }
+                                        Id = Guid.NewGuid(),
+                                        Name = "NO." + GenerateRandomString(6),
+                                        Email = value.Email,
+                                        CreateDatetime = DateTime.UtcNow,
+                                        ModifyDatetime = DateTime.UtcNow,
+                                        UserId = addUser.Id
                                 }
                         };
 
                         _context.User.Add(addUser);
                         await _context.SaveChangesAsync();
 
-                        var user = await _context.User.Where(a => a.Email == value.Email && a.Password == addUser.Password).SingleOrDefaultAsync();
-
                         var claim = new List<Claim>
                                 {
-                                        new Claim(JwtRegisteredClaimNames.Email, user.Email.ToString()),
-                                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                                        new Claim(JwtRegisteredClaimNames.Email, addUser.Email.ToString()),
+                                        new Claim(ClaimTypes.NameIdentifier, addUser.Id.ToString())
                                 };
 
                         var AccessToken = _tokenService.CreateAccessToken(claim);
@@ -104,18 +112,18 @@ namespace movieTickApi.Controllers
                         var addAccessToken = new Token
                         {
                                 Id = Guid.NewGuid(),
-                                UserId = user.Id,
+                                UserId = addUser.Id,
                                 token = AccessToken,
                                 CreatedAt = DateTime.UtcNow,
-                                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                                ExpiresAt = DateTime.UtcNow.AddMinutes(60),
                                 IsRevoked = false
                         };
 
                         var addRefreshToken = new UserRefreshTokens
                         {
-                                UserId = user.Id,
+                                UserId = addUser.Id,
                                 RefreshToken = RefreshToken,
-                                ExpiryDate = DateTime.UtcNow.AddMinutes(15)
+                                ExpiryDate = DateTime.UtcNow.AddMinutes(120)
                         };
 
                         _context.Token.Add(addAccessToken);
@@ -129,7 +137,7 @@ namespace movieTickApi.Controllers
                                 HttpOnly = true,
                                 Secure = true,
                                 SameSite = SameSiteMode.None,
-                                Expires = DateTime.UtcNow.AddMinutes(15)
+                                Expires = DateTime.UtcNow.AddMinutes(120)
                         });
 
 
@@ -148,14 +156,16 @@ namespace movieTickApi.Controllers
                 [HttpPost("Login")]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> PostLogin([FromBody] LoginInputDto value)
                 {
-                        var selectUser= await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
+                        var selectUser = await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
 
-                        if (selectUser == null || !BCrypt.Net.BCrypt.Verify(value.Password, selectUser.Password)) {
+                        if (selectUser == null || !BCrypt.Net.BCrypt.Verify(value.Password, selectUser.Password))
+                        {
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
                                         Message = "帳號密碼錯誤",
-                                        Result = new { 
+                                        Result = new
+                                        {
                                                 isAccountError = true
                                         }
                                 });
@@ -178,7 +188,7 @@ namespace movieTickApi.Controllers
                                         UserId = selectUser.Id,
                                         token = AccessToken,
                                         CreatedAt = DateTime.UtcNow,
-                                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                                        ExpiresAt = DateTime.UtcNow.AddMinutes(60),
                                         IsRevoked = false
                                 };
 
@@ -186,7 +196,7 @@ namespace movieTickApi.Controllers
                                 {
                                         UserId = selectUser.Id,
                                         RefreshToken = RefreshToken,
-                                        ExpiryDate = DateTime.UtcNow.AddMinutes(15)
+                                        ExpiryDate = DateTime.UtcNow.AddMinutes(120)
                                 };
 
                                 _context.Token.Add(addAccessToken);
@@ -200,7 +210,7 @@ namespace movieTickApi.Controllers
                                         HttpOnly = true,
                                         Secure = true,
                                         SameSite = SameSiteMode.None,
-                                        Expires = DateTime.UtcNow.AddMinutes(15)
+                                        Expires = DateTime.UtcNow.AddMinutes(120)
                                 });
 
 
@@ -236,7 +246,8 @@ namespace movieTickApi.Controllers
 
                         var accessToken = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-                        if (string.IsNullOrEmpty(accessToken) == false) {
+                        if (string.IsNullOrEmpty(accessToken) == false)
+                        {
                                 var result = await _context.Token.Where(x => x.token == accessToken && x.IsRevoked == false).FirstOrDefaultAsync();
 
                                 if (result != null)
@@ -283,7 +294,7 @@ namespace movieTickApi.Controllers
                         {
                                 var user = await _context.User.FirstOrDefaultAsync(x => x.Id == reFreshToken.UserId);
 
-                                 var claim = new List<Claim>
+                                var claim = new List<Claim>
                                 {
                                         new Claim(ClaimTypes.Email, user.Email.ToString()),
                                         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
@@ -297,7 +308,7 @@ namespace movieTickApi.Controllers
                                         UserId = user.Id,
                                         token = AccessToken,
                                         CreatedAt = DateTime.UtcNow,
-                                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                                        ExpiresAt = DateTime.UtcNow.AddMinutes(60),
                                         IsRevoked = false
                                 };
 
@@ -323,7 +334,8 @@ namespace movieTickApi.Controllers
                 {
                         var userId = HttpContext.Items["UserId"] as string;
 
-                        if (string.IsNullOrEmpty(userId) == true) {
+                        if (string.IsNullOrEmpty(userId) == true)
+                        {
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
@@ -343,7 +355,8 @@ namespace movieTickApi.Controllers
                                         Result = false
                                 });
                         }
-                        else {
+                        else
+                        {
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
@@ -396,12 +409,12 @@ namespace movieTickApi.Controllers
                 [HttpPost("PostValidOtp")]
                 public async Task<RequestResultOutputDto<object>> PostValidOtp([FromBody] PostValidInputDto validOtp)
                 {
-                        var otp =_context.OtpVerification
+                        var otp = _context.OtpVerification
                                 .Where(x => x.Email == validOtp.Email && x.Otp == validOtp.Otp && x.ExpirationTime > DateTime.UtcNow && x.IsUsed == false)
                                 .OrderByDescending(x => x.ExpirationTime)
                                 .FirstOrDefault();
 
-                        if(otp == null)
+                        if (otp == null)
                         {
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
@@ -491,14 +504,14 @@ namespace movieTickApi.Controllers
                                 .GroupBy(d => new { d.CountyName, d.CountyCode })
                                 .Select((group) => new LocationOutputDto
                                 {
-                                    CountyName = group.Key.CountyName,
-                                    CountyCode = group.Key.CountyCode,
-                                    District = group.Select(d => new DistrictOutputDto
-                                    {
-                                            DistrictName = d.DistrictName,
-                                            DistrictCode = d.DistrictCode,
-                                            PostalCode = d.PostalCode
-                                    }).ToList()
+                                        CountyName = group.Key.CountyName,
+                                        CountyCode = group.Key.CountyCode,
+                                        District = group.Select(d => new DistrictOutputDto
+                                        {
+                                                DistrictName = d.DistrictName,
+                                                DistrictCode = d.DistrictCode,
+                                                PostalCode = d.PostalCode
+                                        }).ToList()
                                 }).ToList();
 
                         return _responseService.RequestResult(new RequestResultOutputDto<object>
