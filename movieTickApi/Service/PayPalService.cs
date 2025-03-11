@@ -1,0 +1,93 @@
+﻿using movieTickApi.Models;
+using Newtonsoft.Json;
+using System.Text;
+
+namespace movieTickApi.Service
+{
+        public class PayPalService
+        {
+                private readonly IConfiguration _configuration;
+                private readonly WebDbContext _context;
+                private readonly IHttpClientFactory _httpClientFactory;
+                private readonly string clientId = "AZF0Rv39g-VaTuQN4rJL-T7mQfBqWtVSWUiO8K95j8wt3_cTpq0eYvrxDIN0Es3HUfnA_zT9osV5Ioj3"; // Replace with your PayPal client ID
+                private readonly string secret = "EO7GPIf3Ty3Tn6mh-4O7EQaAVTseNtVXIhMNhF6PTgVqlr_5Gd-_k-TNRNBvdQ-n1drL8ZJ4V466i1EW"; // Replace with your PayPal secret
+                public readonly string baseUrl = "https://api.sandbox.paypal.com";
+
+                // 確保透過 DI 注入 IHttpClientFactory
+                public PayPalService(IConfiguration configuration, WebDbContext context, IHttpClientFactory httpClientFactory)
+                {
+                        _configuration = configuration;
+                        _context = context;
+                        _httpClientFactory = httpClientFactory;
+                }
+
+                public async Task<string> GetAccessTokenAsync()
+                {
+                        var client = _httpClientFactory.CreateClient();
+
+                        var authValue = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientId}:{secret}"));
+                        client.DefaultRequestHeaders.Add("Authorization", $"Basic {authValue}");
+
+                        var requestBody = new StringContent("grant_type=client_credentials", Encoding.UTF8, "application/x-www-form-urlencoded");
+
+                        var response = await client.PostAsync($"{baseUrl}/v1/oauth2/token", requestBody);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                                throw new Exception("Failed to retrieve access token from PayPal API");
+                        }
+
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        dynamic responseJson = JsonConvert.DeserializeObject(responseBody);
+
+                        return responseJson.access_token;
+                }
+
+                public async Task<(string orderId, string approvalUrl)> CreatePayment(int totalCost)
+                {
+                        // 獲取 access token
+                        var accessToken = await GetAccessTokenAsync();
+
+                        var client = _httpClientFactory.CreateClient();
+                        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+
+                        // 創建 PayPal 訂單
+                        var orderRequest = new
+                        {
+                                intent = "CAPTURE",
+                                purchase_units = new[]
+                                {
+                                    new
+                                    {
+                                        amount = new
+                                        {
+                                            currency_code = "TWD",
+                                            value = totalCost.ToString()
+                                        }
+                                    }
+                                 },
+                                application_context = new
+                                {
+                                        return_url = _configuration["FrontHostUrl"] + "paypal-check",
+                                        cancel_url = _configuration["FrontHostUrl"] + "paypal-error"
+                                }
+                        };
+
+                        var content = new StringContent(JsonConvert.SerializeObject(orderRequest), Encoding.UTF8, "application/json");
+
+                        var response = await client.PostAsync($"{baseUrl}/v2/checkout/orders", content);
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                                return (null, null);
+                        }
+
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        dynamic responseJson = JsonConvert.DeserializeObject(responseBody);
+
+                        string orderId = responseJson.id;
+                        string approvalUrl = responseJson.links[1].href;
+
+                        return (orderId, approvalUrl);
+                }
+        }
+}

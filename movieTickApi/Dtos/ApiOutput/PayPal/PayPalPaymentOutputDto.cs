@@ -2,6 +2,6 @@
 {
         public class PayPalPaymentOutputDto
         {
-                public string approvalUrl { get; set; }
+                public required string ApprovalUrl { get; set; }
         }
 }

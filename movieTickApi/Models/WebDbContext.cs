@@ -4,9 +4,9 @@ using movieTickApi.Models.Users;
 
 namespace movieTickApi.Models
 {
-    public class WebDbContext : DbContext
+        public class WebDbContext : DbContext
         {
-                public WebDbContext(DbContextOptions<WebDbContext> options): base(options)
+                public WebDbContext(DbContextOptions<WebDbContext> options) : base(options)
                 {
                 }
 
@@ -18,7 +18,9 @@ namespace movieTickApi.Models
                 public DbSet<Locations> Locations { get; set; }
                 public DbSet<TicketCategory> TicketCategory { get; set; }
                 public DbSet<TicketLanguage> TicketLanguage { get; set; }
+                public DbSet<TicketDetailMain> TicketDetailMain { get; set; }
                 public DbSet<TicketDetail> TicketDetail { get; set; }
+                public DbSet<TicketPaymentStatus> TicketPaymentStatus { get; set; }
 
                 protected override void OnModelCreating(ModelBuilder modelBuilder)
                 {
@@ -35,6 +37,19 @@ namespace movieTickApi.Models
                             .HasOne(t => t.UserRefreshTokens)
                             .WithMany(u => u.Token)
                             .HasForeignKey(t => t.UserId);
+
+                        modelBuilder.Entity<TicketDetail>()
+                            .HasOne(t => t.TicketDetailMain)
+                            .WithMany(u => u.TicketDetail)
+                            .HasForeignKey(t => t.TicketDetailMainId);
+
+                        modelBuilder.Entity<TicketPaymentStatus>()
+                                .HasKey(p => p.StatusId);
+
+                        modelBuilder.Entity<TicketDetailMain>()
+                            .HasOne(t => t.TicketPaymentStatus)
+                            .WithMany(p => p.TicketDetailMain)
+                            .HasForeignKey(t => t.TicketStatusId);
                 }
         }
 }

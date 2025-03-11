@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using movieTickApi.Models;
-using movieTickApi.Service;
 using movieTickApi.Helper;
+using movieTickApi.Models;
 using movieTickApi.Models.Users;
+using movieTickApi.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +51,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<PayPalService>();
 builder.Services.AddScoped<ResponseService>();
 
 //  發信SMTP設定

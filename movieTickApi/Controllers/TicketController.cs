@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using movieTickApi.Dtos.Input.Ticket;
 using movieTickApi.Dtos.Output.Ticket;
 using movieTickApi.Dtos.Output.Users;
-using movieTickApi.Helper;
 using movieTickApi.Models;
 using movieTickApi.Models.Ticket;
 using movieTickApi.Service;
@@ -21,20 +20,23 @@ namespace movieTickApi.Controllers
                 private readonly IMapper _mapper;
                 private readonly TokenService _tokenService;
                 private readonly ResponseService _responseService;
+                private readonly PayPalService _payPalService;
 
                 public TicketController(
                         WebDbContext context,
-                        IMapper mapper,
                         IConfiguration configuration,
+                        IMapper mapper,
                         TokenService tokenService,
                         ResponseService responseService,
-                        MailHelper mailHelper)
+                        PayPalService payPalService
+                 )
                 {
                         _context = context;
                         _mapper = mapper;
                         _configuration = configuration;
                         _tokenService = tokenService;
                         _responseService = responseService;
+                        _payPalService = payPalService;
                 }
 
                 // 取得票種
@@ -42,7 +44,8 @@ namespace movieTickApi.Controllers
                 public async Task<ActionResult<RequestResultOutputDto<object>>> GetTicketCategory()
                 {
                         var result = await _context.TicketCategory
-                                .Select(item => new TicketCategoryDto{
+                                .Select(item => new TicketCategoryDto
+                                {
                                         CategoryCode = item.CategoryCode,
                                         CategoryName = item.CategoryName,
                                         Cost = item.Cost
@@ -77,13 +80,14 @@ namespace movieTickApi.Controllers
                 [HttpPost("PostSelectSeat")]
                 public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
                 {
-                        var seat = await _context.TicketDetail
-                                .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime)
-                                .Select(y => new TicketSeatOutputDto
+                        var seat = await _context.TicketDetailMain
+                                .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime && x.TicketLanguageCode == value.TicketLanguageCode)
+                                .Include(x => x.TicketDetail)
+                                .SelectMany(y => y.TicketDetail.Select(td => new TicketSeatOutputDto
                                 {
-                                        Column = y.TicketColumn,
-                                        Seat = y.TicketSeat
-                                }).ToListAsync();
+                                        Column = td.TicketColumn,
+                                        Seat = td.TicketSeat
+                                })).ToListAsync();
 
                         return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
@@ -104,11 +108,23 @@ namespace movieTickApi.Controllers
                                 {
                                         StatusCode = 400,
                                         Message = "請求參數不合法",
-                                        Result = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+                                        Result = false
                                 });
                         }
 
-                        var createUser = await _context.UserProfile.Where(x => x.UserId == Guid.Parse(HttpContext.Items["UserId"] as string)).FirstOrDefaultAsync();
+                        var userId = HttpContext.Items["UserId"] as string;
+
+                        if (string.IsNullOrEmpty(userId))
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 400,
+                                        Message = "使用者不存在",
+                                        Result = false
+                                });
+                        }
+
+                        var createUser = await _context.UserProfile.Where(x => x.UserId == Guid.Parse(userId)).FirstOrDefaultAsync();
 
                         if (createUser == null)
                         {
@@ -120,56 +136,85 @@ namespace movieTickApi.Controllers
                                 }));
                         }
 
-                        var mapTick = new List<TicketDetail>();
-                        foreach (var item in value.TicketCategory) {
-                                mapTick.Add(new TicketDetail
+                        var createOrder = await _payPalService.CreatePayment(value.TotalCost);
+                        if (createOrder.orderId == null)
+                        {
+                                return BadRequest(_responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
-                                        MovieId = value.MovieId,
-                                        TicketDate = value.TicketDateTime,
-                                        TicketLanguageCode = value.TicketLanguageCode,
-                                        TicketLanguageName = value.TicketLanguageName,
+                                        StatusCode = 400,
+                                        Message = "訂單建立失敗",
+                                        Result = false
+                                }));
+                        }
+
+                        var TicketDetail = new TicketDetailMain
+                        {
+                                Id = Guid.NewGuid(),
+                                MovieId = value.MovieId,
+                                MovieName = value.MovieName,
+                                TicketDate = value.TicketDateTime,
+                                TicketLanguageCode = value.TicketLanguageCode,
+                                TicketLanguageName = value.TicketLanguageName,
+                                TicketStatusId = 2,
+                                CreateUserNo = createUser.UserNo,
+                                CreateDateTime = DateTime.UtcNow,
+                                CreateOrderId = createOrder.orderId
+                        };
+
+                        var mapTick = value.TicketCategory
+                                .Select(item => new TicketDetail
+                                {
+                                        Id = Guid.NewGuid(),
+                                        TicketDetailMainId = TicketDetail.Id,
                                         TicketCategoryCode = item.CategoryCode,
                                         TicketCategoryName = item.CategoryName,
                                         TicketColumn = item.Column,
                                         TicketSeat = item.Seat,
-                                        TicketMoney = item.Cost,
-                                        CreateUserNo = createUser.UserNo,
-                                        CreateDateTime = DateTime.UtcNow
-                                });
-                        }
+                                        TicketMoney = item.Cost
+                                }).ToList();
 
-                        await _context.TicketDetail.AddRangeAsync(mapTick);
+                        TicketDetail.TicketTotalPrice = mapTick.Sum(x => x.TicketMoney);
+                        TicketDetail.TicketDetail = mapTick;
+
+                        await _context.TicketDetailMain.AddAsync(TicketDetail);
                         await _context.SaveChangesAsync();
 
                         return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
-                                Message = "送出成功",
-                                Result = true
+                                Message = "建立成功",
+                                Result = createOrder.approvalUrl
                         }));
                 }
-                
+
                 // 取得個人票券
                 [HttpGet("GetPersonalTicketList")]
                 [Authorize]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> GetPersonalTicketList([FromQuery] TicketPersonalInputDto value)
                 {
-                        var ticketDetailQuery =  _context.TicketDetail.Where(x => x.CreateUserNo == value.UserNo);
+                        var ticketDetailQuery = _context.TicketDetailMain.Where(x => x.CreateUserNo == value.UserNo);
                         var totalCount = await ticketDetailQuery.CountAsync();
 
                         int pageIndex = value.PageIndex < 1 ? 1 : value.PageIndex;
                         int pageSize = value.PageSize < 1 ? 10 : value.PageSize;
 
                         var result = await ticketDetailQuery
+                                .Include(x => x.TicketPaymentStatus)
                                 .Skip((pageIndex - 1) * pageSize)
                                 .Take(pageSize)
                                 .Select(y => new TicketPersonalOutputDto
                                 {
+                                        MovieName = y.MovieName,
                                         TicketDate = y.TicketDate,
-                                        TicketCategoryName = y.TicketCategoryName,
                                         TicketLanguageName = y.TicketLanguageName,
-                                        Column = y.TicketColumn,
-                                        Seat = y.TicketSeat
+                                        TicketStatusName = y.TicketPaymentStatus.StatusName,
+                                        TicketPersonalItem = y.TicketDetail.Select(td => new TicketPersonalItemOutputDto
+                                        {
+                                                TicketCategoryName = td.TicketCategoryName,
+                                                TicketColumn = td.TicketColumn,
+                                                TicketSeat = td.TicketSeat,
+                                                TicketMoney = td.TicketMoney
+                                        }).ToList()
                                 }).ToListAsync();
 
                         return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>

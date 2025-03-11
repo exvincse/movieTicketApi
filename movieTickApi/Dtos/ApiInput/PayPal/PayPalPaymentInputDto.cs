@@ -1,7 +1,10 @@
-﻿namespace movieTickApi.Dtos.ApiInput.PayPal
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace movieTickApi.Dtos.ApiInput.PayPal
 {
-        public class PayPalPaymentInputDto
+        public class PayPalCheckOrderInputDto
         {
-                public int total { get; set; }
+                [Required(ErrorMessage = "Token不可為空")]
+                public required string Token { get; set; }
         }
 }
