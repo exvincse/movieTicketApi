@@ -77,5 +77,79 @@ namespace movieTickApi.Controllers
                                 Result = true
                         });
                 }
+
+                [HttpGet("GetOrderDetail")]
+                public async Task<RequestResultOutputDto<object>> GetOrderDetail([FromQuery] string orderId)
+                {
+                        if (string.IsNullOrEmpty(orderId))
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 400,
+                                        Message = "缺少 orderId 參數",
+                                        Result = false
+                                });
+                        }
+
+                        try
+                        {
+                                var accessToken = await _payPalService.GetAccessTokenAsync();
+                                var client = _httpClientFactory.CreateClient();
+                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                                var response = await client.GetAsync($"{_payPalService.baseUrl}/v2/checkout/orders/{orderId}");
+
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = (int)response.StatusCode,
+                                                Message = response.ReasonPhrase,
+                                                Result = ""
+                                        });
+                                }
+
+                                var responseBody = await response.Content.ReadAsStringAsync();
+                                var responseJson = JsonConvert.DeserializeObject<dynamic>(responseBody);
+
+                                if (responseJson?.status == null || responseJson?.links == null)
+                                {
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = 400,
+                                                Message = "無效的訂單 ID 或回應格式錯誤",
+                                                Result = ""
+                                        });
+                                }
+
+                                if (responseJson.links.Count >= 2 && responseJson.links[1]?.href != null)
+                                {
+                                        string approvalUrl = responseJson.links[1].href;
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = (int)response.StatusCode,
+                                                Message = "取得訂單詳情成功",
+                                                Result = approvalUrl
+                                        });
+                                }
+
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = (int)response.StatusCode,
+                                        Message = "找不到訂單的核准連結",
+                                        Result = ""
+                                });
+                        }
+                        catch (Exception ex)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 500,
+                                        Message = ex.Message,
+                                        Result = false
+                                });
+                        }
+                }
+
         }
 }

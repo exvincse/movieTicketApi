@@ -6,6 +6,8 @@
                 public DateTime TicketDate { get; set; }
                 public required string TicketLanguageName { get; set; }
                 public required string TicketStatusName { get; set; }
+                public int TicketStatusId { get; set; }
+                public required string CreateOrderId { get; set; }
                 public required List<TicketPersonalItemOutputDto> TicketPersonalItem { get; set; }
         }
 

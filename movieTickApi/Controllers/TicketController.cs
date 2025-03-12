@@ -81,7 +81,7 @@ namespace movieTickApi.Controllers
                 public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
                 {
                         var seat = await _context.TicketDetailMain
-                                .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime && x.TicketLanguageCode == value.TicketLanguageCode)
+                                .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime && x.TicketLanguageCode == value.TicketLanguageCode && x.TicketStatusId != 3)
                                 .Include(x => x.TicketDetail)
                                 .SelectMany(y => y.TicketDetail.Select(td => new TicketSeatOutputDto
                                 {
@@ -202,11 +202,13 @@ namespace movieTickApi.Controllers
                                 .Include(x => x.TicketPaymentStatus)
                                 .Skip((pageIndex - 1) * pageSize)
                                 .Take(pageSize)
+                                .OrderByDescending(x => x.TicketDate)
                                 .Select(y => new TicketPersonalOutputDto
                                 {
                                         MovieName = y.MovieName,
                                         TicketDate = y.TicketDate,
                                         TicketLanguageName = y.TicketLanguageName,
+                                        TicketStatusId = y.TicketPaymentStatus.StatusId,
                                         TicketStatusName = y.TicketPaymentStatus.StatusName,
                                         TicketPersonalItem = y.TicketDetail.Select(td => new TicketPersonalItemOutputDto
                                         {
@@ -214,7 +216,8 @@ namespace movieTickApi.Controllers
                                                 TicketColumn = td.TicketColumn,
                                                 TicketSeat = td.TicketSeat,
                                                 TicketMoney = td.TicketMoney
-                                        }).ToList()
+                                        }).ToList(),
+                                        CreateOrderId = y.CreateOrderId
                                 }).ToListAsync();
 
                         return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>

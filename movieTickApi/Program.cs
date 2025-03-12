@@ -31,6 +31,7 @@ builder.Services.AddCors(options =>
 
 // 註冊背景服務
 builder.Services.AddHostedService<TokenCleanupService>();
+builder.Services.AddHostedService<PayPalStatusService>();
 
 // 設定資料庫
 var connectionString = configuration.GetConnectionString("DefaultConnection")
