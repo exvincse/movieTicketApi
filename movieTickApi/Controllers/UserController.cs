@@ -115,7 +115,7 @@ namespace movieTickApi.Controllers
                                 UserId = addUser.Id,
                                 AccessToken = AccessToken,
                                 CreateDateTime = DateTime.UtcNow,
-                                ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
+                                ExpiryDateTime = DateTime.UtcNow.AddHours(1),
                                 IsRevoked = false
                         };
 
@@ -123,7 +123,7 @@ namespace movieTickApi.Controllers
                         {
                                 UserId = addUser.Id,
                                 RefreshToken = RefreshToken,
-                                ExpiryDateTime = DateTime.UtcNow.AddMinutes(120)
+                                ExpiryDateTime = DateTime.UtcNow.AddHours(2)
                         };
 
                         _context.Token.Add(addAccessToken);
@@ -137,7 +137,7 @@ namespace movieTickApi.Controllers
                                 HttpOnly = true,
                                 Secure = true,
                                 SameSite = SameSiteMode.None,
-                                Expires = DateTime.UtcNow.AddMinutes(120)
+                                Expires = DateTime.UtcNow.AddHours(2)
                         });
 
 
@@ -188,7 +188,7 @@ namespace movieTickApi.Controllers
                                         UserId = selectUser.Id,
                                         AccessToken = AccessToken,
                                         CreateDateTime = DateTime.UtcNow,
-                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
+                                        ExpiryDateTime = DateTime.UtcNow.AddHours(1),
                                         IsRevoked = false
                                 };
 
@@ -196,7 +196,7 @@ namespace movieTickApi.Controllers
                                 {
                                         UserId = selectUser.Id,
                                         RefreshToken = RefreshToken,
-                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(120)
+                                        ExpiryDateTime = DateTime.UtcNow.AddHours(2)
                                 };
 
                                 _context.Token.Add(addAccessToken);
@@ -210,7 +210,7 @@ namespace movieTickApi.Controllers
                                         HttpOnly = true,
                                         Secure = true,
                                         SameSite = SameSiteMode.None,
-                                        Expires = DateTime.UtcNow.AddMinutes(120)
+                                        Expires = DateTime.UtcNow.AddHours(2)
                                 });
 
 
@@ -308,7 +308,7 @@ namespace movieTickApi.Controllers
                                         UserId = user.Id,
                                         AccessToken = AccessToken,
                                         CreateDateTime = DateTime.UtcNow,
-                                        ExpiryDateTime = DateTime.UtcNow.AddMinutes(60),
+                                        ExpiryDateTime = DateTime.UtcNow.AddHours(1),
                                         IsRevoked = false
                                 };
 
