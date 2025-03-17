@@ -28,7 +28,7 @@ namespace movieTickApi.Service
                         var context = scope.ServiceProvider.GetRequiredService<WebDbContext>();
 
                         var ticket = await context.TicketDetailMain
-                            .Where(x => x.CreateDateTime.AddMinutes(5) < DateTime.UtcNow)
+                            .Where(x => x.CreateDateTime.AddMinutes(5) < DateTime.UtcNow && x.TicketStatusId == 2)
                             .ExecuteUpdateAsync(y => y.SetProperty(z => z.TicketStatusId, 3));
 
                         await context.SaveChangesAsync();

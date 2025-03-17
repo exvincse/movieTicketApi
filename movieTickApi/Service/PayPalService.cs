@@ -1,5 +1,8 @@
-﻿using movieTickApi.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using movieTickApi.Dtos.ThirdApiOutput;
+using movieTickApi.Models;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace movieTickApi.Service
@@ -11,9 +14,8 @@ namespace movieTickApi.Service
                 private readonly IHttpClientFactory _httpClientFactory;
                 private readonly string clientId = "AZF0Rv39g-VaTuQN4rJL-T7mQfBqWtVSWUiO8K95j8wt3_cTpq0eYvrxDIN0Es3HUfnA_zT9osV5Ioj3"; // Replace with your PayPal client ID
                 private readonly string secret = "EO7GPIf3Ty3Tn6mh-4O7EQaAVTseNtVXIhMNhF6PTgVqlr_5Gd-_k-TNRNBvdQ-n1drL8ZJ4V466i1EW"; // Replace with your PayPal secret
-                public readonly string baseUrl = "https://api.sandbox.paypal.com";
+                public readonly string baseUrl = "https://api-m.sandbox.paypal.com";
 
-                // 確保透過 DI 注入 IHttpClientFactory
                 public PayPalService(IConfiguration configuration, WebDbContext context, IHttpClientFactory httpClientFactory)
                 {
                         _configuration = configuration;
@@ -60,14 +62,14 @@ namespace movieTickApi.Service
                                     {
                                         amount = new
                                         {
-                                            currency_code = "TWD",
+                                            currency_code = "USD",
                                             value = totalCost.ToString()
                                         }
                                     }
                                  },
                                 application_context = new
                                 {
-                                        return_url = _configuration["FrontHostUrl"] + "paypal-check",
+                                        return_url = _configuration["FrontHostUrl"] + "paypal-success",
                                         cancel_url = _configuration["FrontHostUrl"] + "paypal-error"
                                 }
                         };
@@ -88,6 +90,25 @@ namespace movieTickApi.Service
                         string approvalUrl = responseJson.links[1].href;
 
                         return (orderId, approvalUrl);
+                }
+
+                public async Task<PayPalCaptureOutputDto> PostSuccessOrder(string OrderId)
+                {
+                        var accessToken = await GetAccessTokenAsync();
+                        var client = _httpClientFactory.CreateClient();
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                        var content = new StringContent("{}", Encoding.UTF8, "application/json");
+                        var response = await client.PostAsync($"{baseUrl}/v2/checkout/orders/{OrderId}/capture", content);
+
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        PayPalCaptureOutputDto responseJson = JsonConvert.DeserializeObject<PayPalCaptureOutputDto>(responseBody);
+
+                        await _context.TicketDetailMain
+                            .Where(x => x.CreateOrderId == responseJson.Id)
+                            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.TicketStatusId, 1));
+
+                        return responseJson;
                 }
         }
 }

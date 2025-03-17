@@ -4,7 +4,7 @@ namespace movieTickApi.Dtos.ApiInput.PayPal
 {
         public class PayPalCheckOrderInputDto
         {
-                [Required(ErrorMessage = "Token不可為空")]
-                public required string Token { get; set; }
+                [Required(ErrorMessage = "OrderId不可為空")]
+                public required string OrderId { get; set; }
         }
 }

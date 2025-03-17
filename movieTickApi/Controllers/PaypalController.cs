@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using movieTickApi.Dtos.ApiInput.PayPal;
+using movieTickApi.Dtos.ApiOutput.PayPal;
 using movieTickApi.Dtos.Output.Users;
 using movieTickApi.Models;
 using movieTickApi.Service;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
-using System.Text;
 
 namespace movieTickApi.Controllers
 {
@@ -32,54 +32,9 @@ namespace movieTickApi.Controllers
                         _payPalService = payPalService;
                 }
 
-                [HttpPost("PostSuccessOrder")]
-                public async Task<RequestResultOutputDto<object>> PostSuccessOrder([FromBody] PayPalCheckOrderInputDto value)
-                {
-                        if (string.IsNullOrEmpty(value.Token))
-                        {
-                                return _responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = HttpContext.Response.StatusCode,
-                                        Message = "缺少 token 參數",
-                                        Result = false
-                                });
-                        }
-
-                        var accessToken = await _payPalService.GetAccessTokenAsync();
-                        var client = _httpClientFactory.CreateClient();
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                        var content = new StringContent("{}", Encoding.UTF8, "application/json");
-                        var response = await client.PostAsync($"{_payPalService.baseUrl}/v2/checkout/orders/{value.Token}/capture", content);
-
-                        if (!response.IsSuccessStatusCode)
-                        {
-                                return _responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = HttpContext.Response.StatusCode,
-                                        Message = "付款失敗，請重試",
-                                        Result = response
-                                });
-                        }
-
-                        var responseBody = await response.Content.ReadAsStringAsync();
-                        dynamic responseJson = JsonConvert.DeserializeObject(responseBody);
-
-                        string orderId = responseJson.id;
-                        await _context.TicketDetailMain
-                            .Where(x => x.CreateOrderId == orderId)
-                            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.TicketStatusId, 1));
-
-                        return _responseService.RequestResult(new RequestResultOutputDto<object>
-                        {
-                                StatusCode = HttpContext.Response.StatusCode,
-                                Message = "付款成功",
-                                Result = true
-                        });
-                }
-
-                [HttpGet("GetOrderDetail")]
-                public async Task<RequestResultOutputDto<object>> GetOrderDetail([FromQuery] string orderId)
+                [HttpGet("GetOrderLink")]
+                [Authorize]
+                public async Task<RequestResultOutputDto<object>> GetOrderLink([FromQuery] string orderId)
                 {
                         if (string.IsNullOrEmpty(orderId))
                         {
@@ -87,7 +42,30 @@ namespace movieTickApi.Controllers
                                 {
                                         StatusCode = 400,
                                         Message = "缺少 orderId 參數",
-                                        Result = false
+                                        Result = null
+                                });
+                        }
+
+                        var userId = HttpContext.Items["UserId"] as string;
+
+                        if (string.IsNullOrEmpty(userId) == true)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = HttpContext.Response.StatusCode,
+                                        Message = "請重新登入",
+                                        Result = null
+                                });
+                        }
+
+                        var result = await _context.TicketDetailMain.Where(x => x.CreateUserNo == int.Parse(userId) && x.CreateOrderId == orderId).CountAsync();
+                        if (result == 0)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = HttpContext.Response.StatusCode,
+                                        Message = "訂單不存在",
+                                        Result = null
                                 });
                         }
 
@@ -105,39 +83,28 @@ namespace movieTickApi.Controllers
                                         {
                                                 StatusCode = (int)response.StatusCode,
                                                 Message = response.ReasonPhrase,
-                                                Result = ""
+                                                Result = null
                                         });
                                 }
 
                                 var responseBody = await response.Content.ReadAsStringAsync();
-                                var responseJson = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                                PayPalOrderOutputDto responseJson = JsonConvert.DeserializeObject<PayPalOrderOutputDto>(responseBody);
 
-                                if (responseJson?.status == null || responseJson?.links == null)
+                                if (responseJson?.Status == null || responseJson?.Links == null)
                                 {
                                         return _responseService.RequestResult(new RequestResultOutputDto<object>
                                         {
                                                 StatusCode = 400,
                                                 Message = "無效的訂單 ID 或回應格式錯誤",
-                                                Result = ""
-                                        });
-                                }
-
-                                if (responseJson.links.Count >= 2 && responseJson.links[1]?.href != null)
-                                {
-                                        string approvalUrl = responseJson.links[1].href;
-                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
-                                        {
-                                                StatusCode = (int)response.StatusCode,
-                                                Message = "取得訂單詳情成功",
-                                                Result = approvalUrl
+                                                Result = null
                                         });
                                 }
 
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = (int)response.StatusCode,
-                                        Message = "找不到訂單的核准連結",
-                                        Result = ""
+                                        Message = "取得訂單詳情成功",
+                                        Result = responseJson.Links[1].Href
                                 });
                         }
                         catch (Exception ex)
@@ -151,5 +118,113 @@ namespace movieTickApi.Controllers
                         }
                 }
 
+                [HttpGet("GetOrderDetail")]
+                [Authorize]
+                public async Task<RequestResultOutputDto<object>> GetOrderDetail([FromQuery] string orderId)
+                {
+                        if (string.IsNullOrEmpty(orderId))
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 400,
+                                        Message = "缺少 orderId 參數",
+                                        Result = null
+                                });
+                        }
+
+                        var userId = HttpContext.Items["UserId"] as string;
+
+                        if (string.IsNullOrEmpty(userId) == true)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = HttpContext.Response.StatusCode,
+                                        Message = "請重新登入",
+                                        Result = null
+                                });
+                        }
+
+                        var result = await _context.TicketDetailMain.Where(x => x.CreateUserNo == int.Parse(userId) && x.CreateOrderId == orderId).CountAsync();
+                        if (result == 0)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = HttpContext.Response.StatusCode,
+                                        Message = "訂單不存在",
+                                        Result = null
+                                });
+                        }
+
+                        try
+                        {
+                                var accessToken = await _payPalService.GetAccessTokenAsync();
+                                var client = _httpClientFactory.CreateClient();
+                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                                var response = await client.GetAsync($"{_payPalService.baseUrl}/v2/checkout/orders/{orderId}");
+
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = (int)response.StatusCode,
+                                                Message = response.ReasonPhrase,
+                                                Result = null
+                                        });
+                                }
+
+                                var responseBody = await response.Content.ReadAsStringAsync();
+                                PayPalOrderOutputDto responseJson = JsonConvert.DeserializeObject<PayPalOrderOutputDto>(responseBody);
+
+                                if (responseJson?.Status == null || responseJson?.Links == null)
+                                {
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = 400,
+                                                Message = "無效的訂單 ID",
+                                                Result = null
+                                        });
+                                }
+
+                                if (responseJson?.Status == "APPROVED")
+                                {
+                                        var orderSuccessDetail = await _payPalService.PostSuccessOrder(responseJson.Id);
+                                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                        {
+                                                StatusCode = (int)response.StatusCode,
+                                                Message = "取得訂單詳情成功",
+                                                Result = new CaptureOutputDto
+                                                {
+                                                        OrderId = orderSuccessDetail.Id,
+                                                        Status = orderSuccessDetail.Status,
+                                                        Amount = orderSuccessDetail.Purchase_units[0].Payments.Captures[0].Amount.Value,
+                                                        CreateTime = orderSuccessDetail.Purchase_units[0].Payments.Captures[0].Create_time
+                                                }
+                                        });
+                                }
+
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = (int)response.StatusCode,
+                                        Message = "取得訂單詳情成功",
+                                        Result = new CaptureOutputDto
+                                        {
+                                                OrderId = responseJson.Id,
+                                                Status = responseJson.Status,
+                                                Amount = responseJson.Purchase_Units[0].Amount.Value,
+                                                CreateTime = responseJson.Create_Time
+                                        }
+                                });
+                        }
+                        catch (Exception ex)
+                        {
+                                return _responseService.RequestResult(new RequestResultOutputDto<object>
+                                {
+                                        StatusCode = 500,
+                                        Message = ex.Message,
+                                        Result = false
+                                });
+                        }
+                }
         }
 }
