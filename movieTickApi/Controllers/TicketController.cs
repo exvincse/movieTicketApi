@@ -124,7 +124,7 @@ namespace movieTickApi.Controllers
                                 });
                         }
 
-                        var createUser = await _context.UserProfile.Where(x => x.UserId == Guid.Parse(userId)).FirstOrDefaultAsync();
+                        var createUser = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
 
                         if (createUser == null)
                         {
@@ -192,7 +192,8 @@ namespace movieTickApi.Controllers
                 [Authorize]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> GetPersonalTicketList([FromQuery] TicketPersonalInputDto value)
                 {
-                        var ticketDetailQuery = _context.TicketDetailMain.Where(x => x.CreateUserNo == value.UserNo);
+                        var userId = HttpContext.Items["UserId"] as string;
+                        var ticketDetailQuery = _context.TicketDetailMain.Where(x => x.CreateUserNo == int.Parse(userId));
                         var totalCount = await ticketDetailQuery.CountAsync();
 
                         int pageIndex = value.PageIndex < 1 ? 1 : value.PageIndex;
@@ -200,9 +201,9 @@ namespace movieTickApi.Controllers
 
                         var result = await ticketDetailQuery
                                 .Include(x => x.TicketPaymentStatus)
+                                .OrderByDescending(x => x.CreateDateTime)
                                 .Skip((pageIndex - 1) * pageSize)
                                 .Take(pageSize)
-                                .OrderByDescending(x => x.TicketDate)
                                 .Select(y => new TicketPersonalOutputDto
                                 {
                                         MovieName = y.MovieName,

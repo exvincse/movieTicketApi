@@ -102,7 +102,7 @@ namespace movieTickApi.Controllers
                         var claim = new List<Claim>
                                 {
                                         new Claim(JwtRegisteredClaimNames.Email, addUser.Email.ToString()),
-                                        new Claim(ClaimTypes.NameIdentifier, addUser.Id.ToString())
+                                        new Claim(ClaimTypes.NameIdentifier, addUser.UserNo.ToString())
                                 };
 
                         var AccessToken = _tokenService.CreateAccessToken(claim);
@@ -175,7 +175,7 @@ namespace movieTickApi.Controllers
                                 var claim = new List<Claim>
                                 {
                                         new Claim(ClaimTypes.Email, selectUser.Email.ToString()),
-                                        new Claim(ClaimTypes.NameIdentifier, selectUser.Id.ToString())
+                                        new Claim(ClaimTypes.NameIdentifier, selectUser.UserNo.ToString())
                                 };
 
                                 var AccessToken = _tokenService.CreateAccessToken(claim);
@@ -228,6 +228,7 @@ namespace movieTickApi.Controllers
 
                 // 登出
                 [HttpPost("Logout")]
+                [Authorize]
                 public async Task<RequestResultOutputDto<object>> PostLogout()
                 {
                         bool isChange = false;
@@ -297,7 +298,7 @@ namespace movieTickApi.Controllers
                                 var claim = new List<Claim>
                                 {
                                         new Claim(ClaimTypes.Email, user.Email.ToString()),
-                                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                                        new Claim(ClaimTypes.NameIdentifier, user.UserNo.ToString())
                                 };
 
                                 var AccessToken = _tokenService.CreateAccessToken(claim);
@@ -344,7 +345,7 @@ namespace movieTickApi.Controllers
                                 });
                         }
 
-                        var result = await _context.UserProfile.Where(x => x.UserId == Guid.Parse(userId)).FirstOrDefaultAsync();
+                        var result = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
 
                         if (result == null)
                         {
@@ -357,6 +358,7 @@ namespace movieTickApi.Controllers
                         }
                         else
                         {
+
                                 return _responseService.RequestResult(new RequestResultOutputDto<object>
                                 {
                                         StatusCode = HttpContext.Response.StatusCode,
@@ -496,6 +498,7 @@ namespace movieTickApi.Controllers
 
                 // 取得縣市
                 [HttpGet("GetLocation")]
+                [Authorize]
                 public async Task<RequestResultOutputDto<object>> GetLocation()
                 {
                         var locations = await _context.Locations.ToListAsync();
@@ -537,7 +540,9 @@ namespace movieTickApi.Controllers
                                 });
                         }
 
-                        var userProfile = await _context.UserProfile.Where(x => x.UserNo == value.UserNo).FirstOrDefaultAsync();
+                        var userId = HttpContext.Items["UserId"] as string;
+
+                        var userProfile = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
 
                         if (userProfile == null)
                         {
