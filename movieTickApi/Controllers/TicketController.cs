@@ -50,17 +50,18 @@ namespace movieTickApi.Controllers
                                         CategoryName = item.CategoryName,
                                         Cost = item.Cost
                                 }).ToListAsync();
-                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
+
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
                                 Result = result
-                        }));
+                        });
                 }
 
                 // 取得票種語言
                 [HttpGet("GetTicketLanguage")]
-                public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> GetTicketLanguage()
+                public async Task<ActionResult<RequestResultOutputDto<object>>> GetTicketLanguage()
                 {
                         var result = await _context.TicketLanguage.Select(item => new TicketLanguageOutputDto
                         {
@@ -68,19 +69,19 @@ namespace movieTickApi.Controllers
                                 CategoryName = item.CategoryName
                         }).ToListAsync();
 
-                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
                                 Result = result
-                        }));
+                        });
                 }
 
                 // 取得已選座位
                 [HttpPost("PostSelectSeat")]
-                public async Task<ActionResult<ActionResult<RequestResultOutputDto<object>>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
                 {
-                        var seat = await _context.TicketDetailMain
+                        var result = await _context.TicketDetailMain
                                 .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime && x.TicketLanguageCode == value.TicketLanguageCode && x.TicketStatusId != 3)
                                 .Include(x => x.TicketDetail)
                                 .SelectMany(y => y.TicketDetail.Select(td => new TicketSeatOutputDto
@@ -89,12 +90,12 @@ namespace movieTickApi.Controllers
                                         Seat = td.TicketSeat
                                 })).ToListAsync();
 
-                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
-                                Result = seat
-                        }));
+                                Result = result
+                        });
                 }
 
                 // 送出票卷
@@ -104,47 +105,21 @@ namespace movieTickApi.Controllers
                 {
                         if (!ModelState.IsValid)
                         {
-                                return _responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = 400,
-                                        Message = "請求參數不合法",
-                                        Result = false
-                                });
+                                return _responseService.ApiRequestResult<object>(400, "請求參數不合法", default);
                         }
 
                         var userId = HttpContext.Items["UserId"] as string;
-
-                        if (string.IsNullOrEmpty(userId))
-                        {
-                                return _responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = 400,
-                                        Message = "使用者不存在",
-                                        Result = false
-                                });
-                        }
-
                         var createUser = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
 
                         if (createUser == null)
                         {
-                                return BadRequest(_responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = 400,
-                                        Message = "使用者不存在",
-                                        Result = false
-                                }));
+                                return _responseService.ApiRequestResult<object>(400, "使用者不存在", false);
                         }
 
                         var createOrder = await _payPalService.CreatePayment(value.TotalCost);
                         if (createOrder.orderId == null)
                         {
-                                return BadRequest(_responseService.RequestResult(new RequestResultOutputDto<object>
-                                {
-                                        StatusCode = 400,
-                                        Message = "訂單建立失敗",
-                                        Result = false
-                                }));
+                                return _responseService.ApiRequestResult<object>(400, "訂單建立失敗", false);
                         }
 
                         var TicketDetail = new TicketDetailMain
@@ -179,12 +154,12 @@ namespace movieTickApi.Controllers
                         await _context.TicketDetailMain.AddAsync(TicketDetail);
                         await _context.SaveChangesAsync();
 
-                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "建立成功",
                                 Result = createOrder.approvalUrl
-                        }));
+                        });
                 }
 
                 // 取得個人票券
@@ -221,7 +196,7 @@ namespace movieTickApi.Controllers
                                         CreateOrderId = y.CreateOrderId
                                 }).ToListAsync();
 
-                        return Ok(_responseService.RequestResult(new RequestResultOutputDto<object>
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
                         {
                                 StatusCode = HttpContext.Response.StatusCode,
                                 Message = "",
@@ -232,7 +207,7 @@ namespace movieTickApi.Controllers
                                         PageSize = value.PageSize,
                                         Result = result
                                 }
-                        }));
+                        });
                 }
         }
 }

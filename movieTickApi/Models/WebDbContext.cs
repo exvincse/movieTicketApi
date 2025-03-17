@@ -33,6 +33,10 @@ namespace movieTickApi.Models
                                 .Property(u => u.UserNo)
                                 .UseIdentityColumn();
 
+                        modelBuilder.Entity<User>()
+                                .Property(u => u.UserNo)
+                                .UseIdentityColumn();
+
                         modelBuilder.Entity<Token>()
                             .HasOne(t => t.UserRefreshTokens)
                             .WithMany(u => u.Token)

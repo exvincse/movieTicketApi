@@ -2,7 +2,6 @@
 {
         public class UserProfileInputDto
         {
-                public int UserNo { get; set; }
                 public required string Name { get; set; }
                 public string? Email { get; set; }
                 public string? CountyCode { get; set; }
