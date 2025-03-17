@@ -30,7 +30,7 @@ namespace movieTickApi.Service
                                 issuer: _configuration["JWT:Issuer"],
                                 audience: _configuration["JWT:Audience"],
                                 claims: claim,
-                                expires: DateTime.UtcNow.AddMinutes(60),
+                                expires: DateTime.UtcNow.AddHours(1),
                                 signingCredentials: new SigningCredentials(jwtKey, SecurityAlgorithms.HmacSha256)
                         );
 
@@ -82,7 +82,7 @@ namespace movieTickApi.Service
                         var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];
                         var result = await _context.UserRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
                         if (result == null) return true;
-                        return result.ExpiryDateTime.ToUniversalTime() < DateTime.UtcNow;
+                        return result.ExpiryDateTime < DateTime.UtcNow;
                 }
 
                 public async Task<bool> IsAccessTokenRevoked()
@@ -90,7 +90,7 @@ namespace movieTickApi.Service
                         var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                         var result = await _context.Token.FirstOrDefaultAsync(x => x.AccessToken == authToken);
                         if (result == null) return true;
-                        return (result.ExpiryDateTime.ToUniversalTime() < DateTime.UtcNow) || result.IsRevoked == true;
+                        return (result.ExpiryDateTime < DateTime.UtcNow) || result.IsRevoked == true;
                 }
         }
 }
