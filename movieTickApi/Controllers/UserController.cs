@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,13 @@ namespace movieTickApi.Controllers
                 [HttpPost("PostRegister")]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> PostRegister([FromBody] RegisterInputDto value)
                 {
+                        var validEmail = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
+
+                        if (validEmail != null)
+                        {
+                                return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "此Email已註冊", true);
+                        }
+
                         var passwordHash = BCrypt.Net.BCrypt.HashPassword(value.Password);
 
                         var addUser = new User
@@ -156,7 +164,7 @@ namespace movieTickApi.Controllers
                 [HttpPost("Login")]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> PostLogin([FromBody] LoginInputDto value)
                 {
-                        var selectUser = await _context.User.Where(a => a.Email == value.Email).FirstOrDefaultAsync();
+                        var selectUser = await _context.User.Where(a => a.Email == value.Email && a.GoogleSub == null).FirstOrDefaultAsync();
 
                         if (selectUser == null || !BCrypt.Net.BCrypt.Verify(value.Password, selectUser.Password))
                         {
@@ -224,6 +232,103 @@ namespace movieTickApi.Controllers
                                         }
                                 });
                         }
+                }
+
+                // 取得google登入token
+                [HttpPost("GoogleLogin")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PostGoogleLogin([FromBody] GoogleLoginInputDto value)
+                {
+                        var payload = await GoogleJsonWebSignature.ValidateAsync(value.GoogleToken, new GoogleJsonWebSignature.ValidationSettings
+                        {
+                                Audience = new[] { "194845046746-ind8shn8n3c52pjiishd4gbelkq379pe.apps.googleusercontent.com" }
+                        });
+
+                        var result = await _context.User.Where(x => x.Email == payload.Email && x.GoogleSub == payload.Subject).FirstOrDefaultAsync();
+
+                        if (result == null)
+                        {
+                                var passwordHash = BCrypt.Net.BCrypt.HashPassword(payload.Subject);
+
+                                var addUser = new User
+                                {
+                                        Id = Guid.NewGuid(),
+                                        Email = payload.Email,
+                                        Password = passwordHash,
+                                        GoogleSub = payload.Subject,
+                                        CreateDateTime = DateTime.UtcNow,
+                                        ModifyDateTime = DateTime.UtcNow,
+                                };
+
+                                addUser.UserProfile = new List<UserProfile>
+                                {
+                                        new UserProfile
+                                        {
+                                                Id = Guid.NewGuid(),
+                                                Name = "NO." + GenerateRandomString(5),
+                                                Email = payload.Email,
+                                                CreateDateTime = DateTime.UtcNow,
+                                                ModifyDateTime = DateTime.UtcNow,
+                                                UserId = addUser.Id
+                                        }
+                                };
+
+                                _context.User.Add(addUser);
+                                await _context.SaveChangesAsync();
+                        }
+
+                        var selectUser = await _context.User.Where(x => x.Email == payload.Email && x.GoogleSub == payload.Subject).FirstOrDefaultAsync();
+
+                        var claim = new List<Claim>
+                        {
+                                new Claim(ClaimTypes.Email, selectUser.Email.ToString()),
+                                new Claim(ClaimTypes.NameIdentifier, selectUser.UserNo.ToString())
+                        };
+
+                        var AccessToken = _tokenService.CreateAccessToken(claim);
+
+                        var RefreshToken = _tokenService.CreateRefreshToken();
+
+                        var addAccessToken = new Token
+                        {
+                                Id = Guid.NewGuid(),
+                                UserId = selectUser.Id,
+                                AccessToken = AccessToken,
+                                CreateDateTime = DateTime.UtcNow,
+                                ExpiryDateTime = DateTime.UtcNow.AddHours(1),
+                                IsRevoked = false
+                        };
+
+                        var addRefreshToken = new UserRefreshTokens
+                        {
+                                UserId = selectUser.Id,
+                                RefreshToken = RefreshToken,
+                                ExpiryDateTime = DateTime.UtcNow.AddHours(2)
+                        };
+
+                        _context.Token.Add(addAccessToken);
+
+                        _context.UserRefreshTokens.Add(addRefreshToken);
+
+                        await _context.SaveChangesAsync();
+
+                        Response.Cookies.Append("refreshToken", RefreshToken, new CookieOptions
+                        {
+                                HttpOnly = true,
+                                Secure = true,
+                                SameSite = SameSiteMode.None,
+                                Expires = DateTime.UtcNow.AddHours(2)
+                        });
+
+
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "",
+                                Result = new
+                                {
+                                        accessToken = AccessToken
+                                }
+                        });
                 }
 
                 // 登出
@@ -415,7 +520,7 @@ namespace movieTickApi.Controllers
                 [HttpPost("PostValidEmail")]
                 public async Task<RequestResultOutputDto<object>> PostValidEmail([FromBody] PostSendMailInputDto value)
                 {
-                        var validEmail = await _context.User.Where(x => x.Email == value.Email).FirstOrDefaultAsync();
+                        var validEmail = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
 
                         if (validEmail == null)
                         {
@@ -429,7 +534,7 @@ namespace movieTickApi.Controllers
                 [HttpPut("PutResetPassword")]
                 public async Task<RequestResultOutputDto<object>> PutResetPassword([FromBody] RegisterInputDto value)
                 {
-                        var user = await _context.User.Where(x => x.Email == value.Email).FirstOrDefaultAsync();
+                        var user = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
 
                         if (user == null)
                         {
