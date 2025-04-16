@@ -440,7 +440,7 @@ namespace movieTickApi.Controllers
 
                         user.Password = passwordHash;
                         user.ModifyDateTime = DateTime.UtcNow;
-                        _context.User.Update(user);
+
                         await _context.SaveChangesAsync();
 
                         return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "修改成功", true);
@@ -506,7 +506,7 @@ namespace movieTickApi.Controllers
 
                         await _context.SaveChangesAsync();
 
-                        return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "使用者資料更新成功", false);
+                        return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "使用者資料更新成功", true);
                 }
         }
 }
