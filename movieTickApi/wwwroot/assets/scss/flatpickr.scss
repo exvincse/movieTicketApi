@@ -1,0 +1,51 @@
+.flatpickr-day.selected{
+    color: #fff;
+    background-color: #2660A9;
+    border-radius: 0;
+    border: none;
+}
+
+.flatpickr-months {
+    justify-content: center;
+}
+
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
+    padding-top: 7.48px;
+}
+
+.flatpickr-day.today {
+    border-radius: 0;
+    border: none;
+}
+
+.flatpickr-day:hover {
+    border-radius: 0;
+}
+
+.flatpickr-calendar {
+    width: 250px;
+    height: 250px;
+}
+
+.dayContainer {
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.flatpickr-rContainer {
+    width: 100%;
+}
+
+.flatpickr-day {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-size: 16px;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    font-size: 16px;
+}

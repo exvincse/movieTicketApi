@@ -1,0 +1,81 @@
+// 水平對齊
+.u-tac {
+    text-align: center;
+
+    @include breakpoint-down("tablet") {
+        &-t {
+            text-align: center;
+        }
+    }
+
+    @include breakpoint-down("mobile") {
+        &-m {
+            text-align: center;
+        }
+    }
+}
+
+.u-tar {
+    text-align: right;
+}
+
+.u-hidden {
+    display: none !important;
+
+    @include breakpoint-down("tablet") {
+        &-t {
+            display: none !important;
+        }
+    }
+
+    @include breakpoint-down("mobile") {
+        &-m {
+            display: none !important;
+        }
+    }
+}
+
+// 主色(藍色)
+.u-font-primary {
+    color: #2660a9;
+}
+
+.u-light-green {
+    color: #2ecc71;
+}
+
+.u-light-red {
+    color: #e74c3c;
+}
+
+.u-font-min {
+    font-size: 12px;
+}
+
+.u-font-sm {
+    font-size: 14px;
+}
+
+.u-font-lg {
+    font-size: 24px;
+}
+
+.u-font-xl {
+    font-size: 28px;
+}
+
+.u-bold {
+    font-weight: bold;
+}
+
+.u-tac {
+    text-align: center;
+}
+
+.u-normal {
+    font-weight: normal !important;
+}
+
+.u-nowrap {
+    white-space: nowrap;
+}

@@ -1,0 +1,295 @@
+.l-movieCard {
+    max-width: 1216px;
+    margin: 16px auto;
+
+    &--full {
+        max-width: 100%;
+    }
+    &__wrap {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    &__itme {
+        width: 235px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+
+    @include breakpoint-down("mobile") {
+        &__itme {
+            width: 400px;
+            margin-right: 0;
+        }
+    }
+}
+
+.l-card {
+    max-width: 1216px;
+    margin: 20px auto;
+    padding: 0 16px;
+
+    &--popup {
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.l-statusBox {
+    max-width: 350px;
+    padding: 0 16px;
+    margin: 0 auto;
+    min-height: calc(100vh - 168px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.o-statusBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    &__img {
+        max-width: 100%;
+        color: #2660a9;
+    }
+
+    &__msg {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    &__img + &__msg {
+        margin-top: 16px;
+    }
+
+    // &__desc {
+    //     max-width: 100%;
+    //     margin: 16px 0 0;
+    //     word-break: break-all;
+
+    //     &--sm {
+    //         width: 315px;
+    //     }
+    // }
+
+    // &__action {
+    //     margin-top: 40px;
+    // }
+
+    // // Modifier - 全尺寸
+    // &--full {
+    //     width: 100%;
+    //     height: 100%;
+    // }
+
+    // // Modifier - 特殊用途
+    // &--success &,
+    // &--failure &,
+    // &__empty {
+    //     &__img {
+    //         margin-top: 16px;
+    //     }
+
+    //     &__msg {
+    //         font-size: 18px;
+    //         font-weight: bold;
+    //     }
+    // }
+
+    // &--success &__img+&__msg,
+    // &--failure &__img+&__msg,
+    // &--empty &__img+&__msg {
+    //     margin-top: 4px;
+    // }
+
+    // &--success &,
+    // &--empty &,
+    // &--nodata &,
+    // &--encourage &,
+    // &--nullData & {
+    //     &__msg {
+    //         font-weight: bold;
+    //         color: #3791ea;
+    //     }
+    // }
+
+    // &--failure & {
+    //     &__msg {
+    //         color: #ff7a00;
+    //     }
+    // }
+
+    // &--empty {
+    //     padding-top: 47px;
+    //     padding-bottom: 122px;
+    // }
+
+    // &--nodata {
+    //     padding: 82px 0;
+    // }
+
+    // &--encourage {
+    //     padding: 72px 16px;
+    // }
+
+    // &--popup#{&}--nodata {
+    //     padding: 28px 0 24px;
+    // }
+
+    // //br跟ac統一使用nullData做為無資料間距
+    // &--nullData {
+    //     padding: 64px 0;
+    // }
+
+    // //popup裡:br跟ac統一使用此做為無資料間距
+    // &--popup#{&}--nullData {
+    //     padding: 48px 0 24px;
+    // }
+
+    // @include breakpoint-down("tablet") {
+    //     &--popup#{&}--nodata {
+    //         padding: 10px 0 16px;
+    //     }
+
+    //     //popup裡:br跟ac統一使用此做為無資料間距
+    //     &--popup#{&}--nullData {
+    //         padding: 32px 0 8px;
+    //     }
+    // }
+
+    // @include breakpoint-down("mobile") {
+
+    //     //br跟ac統一使用nullData做為無資料間距
+    //     &--nullData {
+    //         padding: 72px 0;
+    //     }
+    // }
+}
+
+.c-movieCard {
+    display: flex;
+    justify-content: center;
+
+    &--column {
+        flex-direction: column;
+    }
+
+    &--wrap {
+        flex-wrap: wrap;
+    }
+
+    &--popup {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    &--popup & {
+        &__img {
+            &--detail {
+                margin-right: 0;
+            }
+        }
+    }
+
+    &__img {
+        width: 100%;
+        padding-top: 150%;
+        background-image: url("https://capi.showtimes.com.tw/assets/d3/d3b2d173a83e46df015c03907e9e007a.jpg");
+        background-position: center;
+        background-size: cover;
+
+        &--detail {
+            padding-top: 0;
+            width: 100%;
+            max-width: 300px;
+            height: 450px;
+            margin-right: 20px;
+        }
+    }
+
+    &__content {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+
+        & > img {
+            margin-left: 8px;
+        }
+
+        &--gary {
+            background-color: #fafafa;
+        }
+    }
+
+    &__title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        word-break: break-all;
+    }
+
+    &__subTitle {
+        color: #212529;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        height: 54px;
+        box-sizing: border-box;
+        word-break: break-all;
+    }
+
+    &__date {
+        color: #212529;
+        font-size: 12px;
+    }
+
+    &--zoom {
+        transform: scale(1);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.3s ease;
+
+        // &:hover {
+        //     transform: scale(1.02);
+        //     box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
+        // }
+    }
+
+    @include breakpoint-down("mobile") {
+        &__img {
+            &--detail {
+                max-width: 300px;
+                height: 450px;
+                margin-right: 0;
+            }
+        }
+    }
+}
+
+.l-movieDetail {
+    &__head {
+        margin-bottom: 40px;
+    }
+
+    &__title {
+        color: #2660a9;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    &__subTitle {
+        font-size: 14px;
+        letter-spacing: 0.1em;
+        font-weight: 300;
+        color: rgb(51, 51, 51);
+    }
+}

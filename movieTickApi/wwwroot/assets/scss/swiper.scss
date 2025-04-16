@@ -1,0 +1,64 @@
+@import "./_variables";
+@import "./_mixins";
+
+.c-banner {
+    &__img {
+        padding-top: 41%;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center center;
+    }
+
+    @include breakpoint-down("mobile") {
+        &__img {
+            padding-top: 95%;
+        }
+    }
+}
+
+.l-swiper {
+    position: relative;
+
+    &__item {
+        max-width: 235px;
+        margin: 12px auto;
+    }
+
+    @include breakpoint-down("mobile") {
+        &__item {
+            padding: 0px 16px;
+            max-width: 400px;
+        }
+    }
+}
+
+.swiper-container {
+    position: relative;
+    max-width: 1216px;
+    padding: 0 16px;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+    width: 10%;
+    font-size: 24px;
+    position: absolute;
+    height: calc(100% - 24px);
+    top: calc(50% + 22px);
+    transform: translateY(-50%);
+    z-index: 10;
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.067);
+        transition: 0.4s;
+    }
+}
+
+.swiper-button-prev {
+    left: 0;
+}
+
+.swiper-button-next {
+    right: 0;
+}

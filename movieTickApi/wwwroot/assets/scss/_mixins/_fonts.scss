@@ -1,0 +1,10 @@
+@mixin font-family() {
+    font-family: 'Nunito', 'Microsoft JhengHei', 'PingFang', sans-serif;
+}
+
+@font-face {
+    font-family: 'MaskWord';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../../fonts/MaskWord.ttf') format('truetype')
+}

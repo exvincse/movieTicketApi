@@ -1,0 +1,1 @@
+import{Ab as e,oa as n}from"./chunk-K24PMR7C.js";var r=class o{onClick(i){i.preventDefault(),i.stopPropagation()}static \u0275fac=function(t){return new(t||o)};static \u0275dir=n({type:o,selectors:[["","appStopPropagation",""]],hostBindings:function(t,a){t&1&&e("click",function(c){return a.onClick(c)})},standalone:!0})};export{r as a};

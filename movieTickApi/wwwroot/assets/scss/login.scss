@@ -1,0 +1,84 @@
+@import "./_variables";
+@import "./_mixins";
+
+.l-login {
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+    background-position: center;
+    background-size: cover;
+
+    &__content {
+        display: flex;
+        justify-content: space-between;
+        max-width: 1100px;
+        margin: 0 auto;
+        flex: 1 1 auto;
+    }
+
+    &__item {
+        flex: 1 1 auto;
+        max-width: 360px;
+        background-color: #fff;
+        border-radius: 4px;
+        box-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.14);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    &__line {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        color: #dbdbdb;
+        margin-bottom: 16px;
+
+        span {
+            padding: 8px;
+        }
+    }
+
+    &__register {
+        text-align: center;
+        color: #ccc;
+        font-size: 14px;
+    }
+
+    &--register & {
+        &__content {
+            display: flex;
+            justify-content: center;
+            max-width: 1100px;
+        }
+
+        &__item {
+            max-width: 400px;
+        }
+    }
+
+    @include breakpoint-down("mobile") {
+        &__content {
+            justify-content: center;
+        }
+    }
+}
+
+.c-login {
+    &__input {
+        position: relative;
+    }
+
+    &__eye {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 10px;
+    }
+
+    &__line {
+        background-color: #dbdbdb;
+        flex: 1;
+        height: 1px;
+        width: 100%;
+    }
+}

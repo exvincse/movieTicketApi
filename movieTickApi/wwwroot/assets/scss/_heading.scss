@@ -1,0 +1,171 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+    &.t1,
+    &.t2,
+    &.t3,
+    &.t4,
+    &.t5 {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+}
+
+.t1 {
+    font-size: 24px;
+}
+
+.t2 {
+    font-size: 20px;
+}
+
+.t3 {
+    font-size: 18px;
+}
+
+.t4 {
+    font-size: 16px;
+}
+
+.t5 {
+    font-size: 14px;
+}
+
+/*------------------------     title     ------------------------*/
+
+.l-headingBar {
+    &__wrap {
+        border-top: 1px solid rgb(230, 230, 230);
+        border-bottom: 1px solid rgb(230, 230, 230);
+    }
+
+    &__content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1216px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+
+    &__title {
+        font-size: 24px;
+        letter-spacing: 0.5em;
+        padding: 10px;
+        border-left: 1px solid rgb(230, 230, 230);
+        border-right: 1px solid rgb(230, 230, 230);
+        background: repeating-linear-gradient(
+            -45deg,
+            rgba(0, 0, 0, 0.067),
+            rgba(0, 0, 0, 0.067) 2px,
+            rgba(0, 0, 0, 0) 2px,
+            rgba(0, 0, 0, 0) 4px
+        );
+    }
+
+    &__link {
+        text-decoration: none;
+        margin-right: 10px;
+    }
+}
+
+.o-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+    color: #3791ea;
+
+    &--sub {
+        font-size: 18px;
+        color: #000;
+    }
+}
+
+.o-subtitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #959595;
+}
+
+.c-stickyTitle {
+    position: relative;
+    padding-left: 17px;
+    font-weight: bold;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
+        width: 5px;
+        height: 100%;
+        background-color: #3791ea;
+    }
+
+    &--love {
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            width: 5px;
+            height: 100%;
+            background-color: #ffae9e;
+        }
+    }
+
+    &--umbrella {
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            width: 5px;
+            height: 100%;
+            background-color: #25bbb7;
+        }
+    }
+}
+
+.l-stickyTitle {
+    display: flex;
+    margin-bottom: 16px;
+
+    &__main {
+    }
+
+    &__sub {
+        display: flex;
+    }
+
+    &--apart & {
+        &__sub {
+            margin-left: 48px;
+        }
+    }
+
+    @include breakpoint-down("mobile") {
+        flex-direction: column;
+
+        &__sub {
+            display: flex;
+            flex-direction: column;
+        }
+
+        &--apart & {
+            &__sub {
+                margin-top: 16px;
+                margin-left: 0;
+            }
+        }
+    }
+}

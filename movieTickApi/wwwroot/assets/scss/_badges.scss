@@ -1,0 +1,18 @@
+.o-line {
+    height: 60px;
+    background-color: #2660a9;
+}
+
+.o-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+
+    &--green {
+        background-color: #28a745;
+    }
+
+    &--yellow {
+        background-color: #ffc107;
+    }
+}

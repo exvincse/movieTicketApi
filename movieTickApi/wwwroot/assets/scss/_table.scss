@@ -1,0 +1,180 @@
+.c-table {
+    width: 100%;
+    border-collapse: collapse;
+    th {
+        padding: 16px;
+        text-align: left;
+        &.is-center {
+            text-align: center;
+        }
+    }
+
+    td {
+        padding: 16px;
+        &.is-center {
+            text-align: center;
+        }
+    }
+
+    &--underline {
+        tr {
+            border-bottom: 1px solid rgb(204, 204, 204);
+        }
+    }
+
+    &--collapse {
+        border: 1px solid rgb(204, 204, 204);
+
+        th,
+        td {
+            border-top: 1px solid rgb(204, 204, 204);
+            border-bottom: 1px solid rgb(204, 204, 204);
+        }
+    }
+
+    &__accordionWrap {
+        table {
+            width: 100%;
+            table-layout: fixed;
+        }
+    }
+
+    &__accordion {
+        background: rgb(204, 204, 204);
+
+        th {
+            border-top: none;
+        }
+
+        td {
+            border-bottom: none;
+        }
+
+        &:first-child {
+            padding: 0;
+        }
+
+        &::before {
+            content: none !important;
+        }
+    }
+
+    @include breakpoint-down("tablet") {
+        &--card {
+            colgroup {
+                display: none;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                display: block;
+                margin-bottom: 16px;
+                padding: 12px;
+                border: 1px solid #ddd;
+                background-color: white;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+
+                td {
+                    display: flex;
+                    align-items: center;
+                    border: none;
+
+                    &.is-center {
+                        text-align: left;
+                    }
+
+                    &::before {
+                        content: attr(data-label);
+                        width: 6em;
+                        flex: 0 0 auto;
+                        font-weight: bold;
+                        margin-right: 16px;
+                        color: #333;
+                    }
+                }
+            }
+        }
+
+        &--card#{&}--collapse {
+            display: flex;
+            flex-wrap: wrap;
+            width: auto !important;
+            margin-left: -8px;
+            margin-right: -8px;
+            text-align: left;
+            border: none;
+
+            & > tbody {
+                flex: 0 0 auto;
+                box-sizing: border-box;
+                display: block;
+                width: calc(50% - 16px);
+                margin: 8px 8px 0;
+                padding: 8px 0;
+                border-radius: 6px;
+                //box-shadow: 0 3px 6px 0 rgba(70, 91, 144, 0.1);
+                background-color: #fff;
+
+                &:nth-of-type(1),
+                &:nth-of-type(2) {
+                    margin-top: 0;
+                }
+
+                tr {
+                    width: 100%;
+                    margin: 0;
+                    padding: 0;
+                    border-radius: 0;
+                    box-shadow: none;
+                    background-color: transparent;
+
+                    td {
+                        border-top: none;
+                    }
+                }
+
+                &.is-padFull {
+                    width: calc(100% - 16px);
+
+                    &:nth-of-type(2) {
+                        margin-top: 16px;
+                    }
+                }
+            }
+        }
+
+        &--card#{&}--collapse & {
+            &__collapse {
+                display: none;
+            }
+
+            &__accordionWrap {
+                display: block;
+
+                &.is-open {
+                    display: block;
+                }
+            }
+
+            &__top {
+                padding-left: 16px;
+            }
+        }
+    }
+
+    /* 手機版卡片佈局 */
+    @include breakpoint-down("mobile") {
+        &--card#{&}--collapse {
+            margin: 0;
+            & > tbody {
+                width: 100%;
+                margin: 0;
+            }
+        }
+    }
+}

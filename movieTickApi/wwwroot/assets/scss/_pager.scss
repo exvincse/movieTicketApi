@@ -1,0 +1,113 @@
+
+.c-pager {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    justify-content: center;
+    align-items: center;
+
+    &__first,
+    &__prev,
+    &__next,
+    &__last,
+    &__no {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        margin: 0 4px;
+    }
+
+    &__first.disable,
+    &__prev.disable,
+    &__next.disable,
+    &__last.disable {
+        pointer-events: none;
+        cursor: default;
+        opacity: .75;
+    }
+
+    &__first {
+        background: url('../images/icons/pager/first.svg') no-repeat center;
+    }
+
+    &__prev {
+        background: url('../images/icons/pager/prev.svg') no-repeat center;
+    }
+
+    &__next {
+        background: url('../images/icons/pager/next.svg') no-repeat center;
+    }
+
+    &__last {
+        background: url('../images/icons/pager/last.svg') no-repeat center;
+    }
+
+    &__no {
+        color: #2660A9;
+        text-decoration: none;
+        text-align: center;
+
+        &.is-active {
+            color: #ffffff;
+            background-color: #2660A9;
+            pointer-events: none;
+        }
+    }
+
+    &__select {
+        display: none;
+        margin: 0 16px;
+
+        .o-selectbox {
+            font-weight: bold;
+            color: #2660A9;
+        }
+    }
+
+    @include breakpoint-down("tablet") {
+
+        &--sm & {
+            &__list {
+                display: none;
+            }
+
+            &__select {
+                display: block;
+            }
+        }
+
+    }
+
+    @include breakpoint-down("mobile") {
+        &__list {
+            display: none;
+        }
+
+        &__select {
+            display: block;
+        }
+    }
+}
+
+.l-pager {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &__download {
+        position: absolute;
+        left: 0;
+    }
+
+    @include breakpoint-down("mobile") {
+        flex-direction: column;
+        justify-content: flex-start;
+
+        &__download {
+            position: static;
+            align-self: flex-start;
+            margin-top: 16px;
+        }
+    }
+}

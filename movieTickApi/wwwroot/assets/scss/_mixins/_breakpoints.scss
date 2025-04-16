@@ -1,0 +1,73 @@
+@mixin breakpoint-up($device) {
+    $min: map-get($width-min, $device);
+
+    @if ($min) {
+        @media only screen and (min-width: $min) {
+            @content;
+        }
+    }
+
+    @else {
+        @content;
+    }
+}
+
+@mixin breakpoint-down($device) {
+    $max: map-get($width-max, $device);
+
+    @if ($max) {
+        @media only screen and (max-width: $max) {
+            @content;
+        }
+    }
+
+    @else {
+        @content;
+    }
+}
+
+@mixin breakpoint-only($device) {
+    $min: map-get($width-min, $device);
+    $max: map-get($width-max, $device);
+
+    @if ($min !=null and $max !=null) {
+        @media (min-width: $min) and (max-width: $max) {
+            @content;
+        }
+    }
+
+    @else if ($max==null) {
+        @include breakpoint-up($device) {
+            @content;
+        }
+    }
+
+    @else if ($min==null) {
+        @include breakpoint-down($device) {
+            @content;
+        }
+    }
+}
+
+@mixin breakpoint-between($lower, $upper) {
+    $min: map-get($width-min, $lower);
+    $max: map-get($width-max, $upper);
+
+    @if ($min !=null and $max !=null) {
+        @media (min-width: $min) and (max-width: $max) {
+            @content;
+        }
+    }
+
+    @else if ($max==null) {
+        @include breakpoint-up($lower) {
+            @content;
+        }
+    }
+
+    @else if ($min==null) {
+        @include breakpoint-down($upper) {
+            @content;
+        }
+    }
+}
