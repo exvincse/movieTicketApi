@@ -478,10 +478,37 @@ namespace movieTickApi.Controllers
                 [HttpPost("PostSendMail")]
                 public async Task<RequestResultOutputDto<object>> PostSendMail([FromBody] PostSendMailInputDto value)
                 {
+                        // 發信前刪除跟這個email相關驗證碼
+                        var mail = _context.OtpVerification.Where(x => x.Email == value.Email).ToList();
+                        if (mail.Count > 0)
+                        {
+                                _context.OtpVerification.RemoveRange(mail);
+                                await _context.SaveChangesAsync();
+                        }
+
+                        var otp = new Random().Next(100000, 999999).ToString();
+
+                        // 儲存驗證碼
+                        var otpVerification = new OtpVerification
+                        {
+                                Id = Guid.NewGuid(),
+                                Email = value.Email,
+                                Otp = otp,
+                                ExpirationTime = DateTime.UtcNow.AddMinutes(4),
+                                IsUsed = false,
+                                CreateDateTime = DateTime.UtcNow,
+                                UpdateDateTime = DateTime.UtcNow
+                        };
+
+                        _context.OtpVerification.Add(otpVerification);
+                        await _context.SaveChangesAsync();
+
                         var mailHelper = await _mailHelper.SendMail(new EmailRequest
                         {
                                 ToEmail = value.Email,
-                                ToName = value.Email.Split('@')[0]
+                                ToName = value.Email.Split('@')[0],
+                                Subject = "驗證Email",
+                                Body = $"驗證碼: {otp}. 驗證碼4分鐘後到期。"
                         });
 
                         if (mailHelper == true)

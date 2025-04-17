@@ -26,14 +26,6 @@ namespace movieTickApi.Helper
 
                 public async Task<bool> SendMail(EmailRequest emailRequest)
                 {
-                        // 發信前刪除跟這個email相關驗證碼
-                        var mail = _context.OtpVerification.Where(x => x.Email == emailRequest.ToEmail).ToList();
-                        if (mail.Count > 0)
-                        {
-                                _context.OtpVerification.RemoveRange(mail);
-                                await _context.SaveChangesAsync();
-                        }
-
                         var message = CreateEmailMessage(emailRequest);
                         var client = new SmtpClient();
 
@@ -46,24 +38,7 @@ namespace movieTickApi.Helper
                                 await client.AuthenticateAsync(_smtpSettings.UserName, _smtpSettings.Password);
 
                                 // 發送郵件
-                                await client.SendAsync(message.Message);
-
-                                // 儲存驗證碼
-                                var otp = new OtpVerification
-                                {
-                                        Id = Guid.NewGuid(),
-                                        Email = emailRequest.ToEmail,
-                                        Otp = message.Otp,
-                                        ExpirationTime = DateTime.UtcNow.AddMinutes(4),
-                                        IsUsed = false,
-                                        CreateDateTime = DateTime.UtcNow,
-                                        UpdateDateTime = DateTime.UtcNow
-                                };
-
-                                _context.OtpVerification.Add(otp);
-                                await _context.SaveChangesAsync();
-
-                                //_httpContextAccessor.HttpContext?.Session.SetString("Email", otp.Email);
+                                await client.SendAsync(message);
 
                                 return true;
                         }
@@ -78,28 +53,23 @@ namespace movieTickApi.Helper
                 }
 
 
-                public EmailMessageResult CreateEmailMessage(EmailRequest emailRequest)
+                public MimeMessage CreateEmailMessage(EmailRequest emailRequest)
                 {
                         // 建立郵件訊息
                         var message = new MimeMessage();
                         message.From.Add(new MailboxAddress(_smtpSettings.SenderName, _smtpSettings.SenderEmail));
                         message.To.Add(new MailboxAddress(emailRequest.ToName, emailRequest.ToEmail));
-                        message.Subject = "驗證Email";
-
-                        var otp = new Random().Next(100000, 999999).ToString();
+                        message.Subject = emailRequest.Subject;
 
                         // 設定郵件內容
                         var bodyBuilder = new BodyBuilder
                         {
-                                HtmlBody = $"驗證碼: {otp}. 驗證碼4分鐘後到期。"
+                                HtmlBody = emailRequest.Body
                         };
+
                         message.Body = bodyBuilder.ToMessageBody();
 
-                        return new EmailMessageResult
-                        {
-                                Message = message,
-                                Otp = otp
-                        };
+                        return message;
                 }
         }
 }

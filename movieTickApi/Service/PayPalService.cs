@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using movieTickApi.Dtos.ThirdApiOutput;
+using movieTickApi.Helper;
 using movieTickApi.Models;
+using movieTickApi.Models.Users;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
@@ -12,15 +14,19 @@ namespace movieTickApi.Service
                 private readonly IConfiguration _configuration;
                 private readonly WebDbContext _context;
                 private readonly IHttpClientFactory _httpClientFactory;
+                private readonly MailHelper _mailHelper;
+                private readonly IHttpContextAccessor _httpContextAccessor;
                 private readonly string clientId = "AZF0Rv39g-VaTuQN4rJL-T7mQfBqWtVSWUiO8K95j8wt3_cTpq0eYvrxDIN0Es3HUfnA_zT9osV5Ioj3"; // Replace with your PayPal client ID
                 private readonly string secret = "EO7GPIf3Ty3Tn6mh-4O7EQaAVTseNtVXIhMNhF6PTgVqlr_5Gd-_k-TNRNBvdQ-n1drL8ZJ4V466i1EW"; // Replace with your PayPal secret
                 public readonly string baseUrl = "https://api-m.sandbox.paypal.com";
 
-                public PayPalService(IConfiguration configuration, WebDbContext context, IHttpClientFactory httpClientFactory)
+                public PayPalService(IConfiguration configuration, WebDbContext context, IHttpClientFactory httpClientFactory, MailHelper mailHelper, IHttpContextAccessor httpContextAccessor)
                 {
                         _configuration = configuration;
                         _context = context;
                         _httpClientFactory = httpClientFactory;
+                        _mailHelper = mailHelper;
+                        _httpContextAccessor = httpContextAccessor;
                 }
 
                 public async Task<string> GetAccessTokenAsync()
@@ -104,9 +110,57 @@ namespace movieTickApi.Service
                         var responseBody = await response.Content.ReadAsStringAsync();
                         PayPalCaptureOutputDto responseJson = JsonConvert.DeserializeObject<PayPalCaptureOutputDto>(responseBody);
 
-                        await _context.TicketDetailMain
-                            .Where(x => x.CreateOrderId == responseJson.Id)
-                            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.TicketStatusId, 1));
+                        await _context.TicketDetailMain.Where(x => x.CreateOrderId == responseJson.Id).ExecuteUpdateAsync(setters => setters.SetProperty(t => t.TicketStatusId, 1));
+
+                        string rowsHtml = $@"
+                                <!DOCTYPE html>
+                                <html>
+                                <body style=""font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;"">
+                                  <div style=""max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 20px;"">
+                                    <h2 style=""color: #333333; border-bottom: 2px solid #2660a9; padding-bottom: 10px;"">訂單明細</h2>
+
+                                    <table style=""width: 100%; border-collapse: collapse; margin-top: 20px;"">
+                                      <thead>
+                                        <tr style=""background-color: #2660a9; color: white;"">
+                                          <th style=""padding: 12px; border: 1px solid #ddd; text-align: right;"">票種</th>
+                                          <th style=""padding: 12px; border: 1px solid #ddd; text-align: right;"">座位</th>
+                                          <th style=""padding: 12px; border: 1px solid #ddd; text-align: right;"">單價</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                        ";
+                        var result = await _context.TicketDetailMain.Include(x => x.TicketDetail).Where(x => x.CreateOrderId == responseJson.Id).FirstOrDefaultAsync();
+                        var items = result.TicketDetail.ToList();
+                        foreach (var item in items)
+                        {
+                                rowsHtml += $@"
+                                        <tr>
+                                                <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">{item.TicketCategoryName}</td>
+                                                <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">{item.TicketColumn}排{item.TicketSeat}座</td>
+                                                <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">${item.TicketMoney}</td>
+                                        </tr>
+                                ";
+                        }
+
+                        rowsHtml += $@"
+                                <tr>
+                                  <td colspan=""2"" style=""padding: 10px; border: 1px solid #ddd; text-align: right;""><strong>總計</strong></td>
+                                  <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;""><strong>${result.TicketTotalPrice}</strong></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </body>
+                        </html>
+                        ";
+
+
+                        await _mailHelper.SendMail(new EmailRequest
+                        {
+                                ToEmail = _httpContextAccessor?.HttpContext.Items["UserEmail"]?.ToString(),
+                                Subject = $"訂單明細-{result.MovieName}",
+                                Body = rowsHtml
+                        });
 
                         return responseJson;
                 }

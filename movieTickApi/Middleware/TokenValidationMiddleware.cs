@@ -89,7 +89,9 @@ public class TokenValidationMiddleware
                         context.User = jwtToken;
 
                         var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                        var userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
                         context.Items["UserId"] = userId?.Value;
+                        context.Items["UserEmail"] = userEmail?.Value;
                 }
                 catch (SecurityTokenExpiredException)
                 {
