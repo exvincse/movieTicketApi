@@ -112,7 +112,7 @@ namespace movieTickApi.Service
 
                         await _context.TicketDetailMain.Where(x => x.CreateOrderId == responseJson.Id).ExecuteUpdateAsync(setters => setters.SetProperty(t => t.TicketStatusId, 1));
 
-                        string rowsHtml = $@"
+                        string html = $@"
                                 <!DOCTYPE html>
                                 <html>
                                 <body style=""font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;"">
@@ -133,16 +133,16 @@ namespace movieTickApi.Service
                         var items = result.TicketDetail.ToList();
                         foreach (var item in items)
                         {
-                                rowsHtml += $@"
+                                html += $@"
                                         <tr>
                                                 <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">{item.TicketCategoryName}</td>
-                                                <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">{item.TicketColumn}排{item.TicketSeat}座</td>
+                                                <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">{item.TicketColumn}排{item.TicketSeat}號</td>
                                                 <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;"">${item.TicketMoney}</td>
                                         </tr>
                                 ";
                         }
 
-                        rowsHtml += $@"
+                        html += $@"
                                 <tr>
                                   <td colspan=""2"" style=""padding: 10px; border: 1px solid #ddd; text-align: right;""><strong>總計</strong></td>
                                   <td style=""padding: 10px; border: 1px solid #ddd; text-align: right;""><strong>${result.TicketTotalPrice}</strong></td>
@@ -159,7 +159,7 @@ namespace movieTickApi.Service
                         {
                                 ToEmail = _httpContextAccessor?.HttpContext.Items["UserEmail"]?.ToString(),
                                 Subject = $"訂單明細-{result.MovieName}",
-                                Body = rowsHtml
+                                Body = html
                         });
 
                         return responseJson;
