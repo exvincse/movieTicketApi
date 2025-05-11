@@ -32,9 +32,9 @@ namespace movieTickApi.Controllers
                         _payPalService = payPalService;
                 }
 
-                [HttpGet("GetOrderLink")]
+                [HttpGet("OrderLink")]
                 [Authorize]
-                public async Task<RequestResultOutputDto<object>> GetOrderLink([FromQuery] string orderId)
+                public async Task<RequestResultOutputDto<object>> OrderLink([FromQuery] string orderId)
                 {
                         if (string.IsNullOrEmpty(orderId))
                         {
@@ -77,9 +77,9 @@ namespace movieTickApi.Controllers
                         }
                 }
 
-                [HttpGet("GetOrderDetail")]
+                [HttpGet("OrderDetail")]
                 [Authorize]
-                public async Task<RequestResultOutputDto<object>> GetOrderDetail([FromQuery] string orderId)
+                public async Task<RequestResultOutputDto<object>> OrderDetail([FromQuery] string orderId)
                 {
                         if (string.IsNullOrEmpty(orderId))
                         {

@@ -40,8 +40,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得票種
-                [HttpGet("GetTicketCategory")]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> GetTicketCategory()
+                [HttpGet("TicketCategory")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> TicketCategory()
                 {
                         var result = await _context.TicketCategory
                                 .Select(item => new TicketCategoryDto
@@ -60,8 +60,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得票種語言
-                [HttpGet("GetTicketLanguage")]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> GetTicketLanguage()
+                [HttpGet("TicketLanguage")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> TicketLanguage()
                 {
                         var result = await _context.TicketLanguage.Select(item => new TicketLanguageOutputDto
                         {
@@ -78,8 +78,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得已選座位
-                [HttpPost("PostSelectSeat")]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> PostSelectSeat([FromBody] TicketSeatInputDto value)
+                [HttpPost("SelectSeat")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> SelectSeat([FromBody] TicketSeatInputDto value)
                 {
                         var result = await _context.TicketDetailMain
                                 .Where(x => x.MovieId == value.MovieId && x.TicketDate == value.MovieTicketDateTime && x.TicketLanguageCode == value.TicketLanguageCode && x.TicketStatusId != 3)
@@ -99,9 +99,9 @@ namespace movieTickApi.Controllers
                 }
 
                 // 送出票卷
-                [HttpPost("PostSealTicket")]
+                [HttpPost("SealTicket")]
                 [Authorize]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> PostSealTicket([FromBody] TicketDetailInputDto value)
+                public async Task<ActionResult<RequestResultOutputDto<object>>> SealTicket([FromBody] TicketDetailInputDto value)
                 {
                         if (!ModelState.IsValid)
                         {
@@ -163,9 +163,9 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得個人票券
-                [HttpGet("GetPersonalTicketList")]
+                [HttpGet("PersonalTicketList")]
                 [Authorize]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> GetPersonalTicketList([FromQuery] TicketPersonalInputDto value)
+                public async Task<ActionResult<RequestResultOutputDto<object>>> PersonalTicketList([FromQuery] TicketPersonalInputDto value)
                 {
                         var userId = HttpContext.Items["UserId"] as string;
                         var ticketDetailQuery = _context.TicketDetailMain.Where(x => x.CreateUserNo == int.Parse(userId));

@@ -51,8 +51,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 確認是否有登入
-                [HttpGet("GetIsCheckLogin")]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> GetIsCheckLogin()
+                [HttpGet("IsLogin")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> IsLogin()
                 {
                         var isAccessTokenRevoked = await _tokenService.IsAccessTokenRevoked();
                         var isTokenRevoked = await _tokenService.IsRefreshTokenRevoked();
@@ -69,8 +69,9 @@ namespace movieTickApi.Controllers
                                 Result = isLogin
                         });
                 }
+
                 // 註冊帳號
-                [HttpPost("PostRegister")]
+                [HttpPost("RegisterAccount")]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> PostRegister([FromBody] RegisterInputDto value)
                 {
                         var validEmail = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
@@ -434,9 +435,9 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得使用者資料
-                [HttpGet("GetUserProfile")]
+                [HttpGet("UserProfile")]
                 [Authorize]
-                public async Task<ActionResult<RequestResultOutputDto<object>>> GetUserProfile()
+                public async Task<ActionResult<RequestResultOutputDto<object>>> UserProfile()
                 {
                         var userId = HttpContext.Items["UserId"] as string;
 
@@ -474,9 +475,43 @@ namespace movieTickApi.Controllers
                         }
                 }
 
+                // 修改個人資料
+                [HttpPut("UserProfile")]
+                [Authorize]
+                public async Task<RequestResultOutputDto<object>> UserProfile([FromBody] UserProfileInputDto value)
+                {
+                        if (!ModelState.IsValid)
+                        {
+                                return _responseService.ApiRequestResult<object>(400, "請求格式錯誤", false);
+                        }
+
+                        var userId = HttpContext.Items["UserId"] as string;
+
+                        var userProfile = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
+
+                        if (userProfile == null)
+                        {
+                                return _responseService.ApiRequestResult<object>(400, "使用者資料不存在", false);
+                        }
+
+                        userProfile.Name = !string.IsNullOrEmpty(value.Name) ? value.Name : userProfile.Name;
+                        userProfile.Email = !string.IsNullOrEmpty(value.Email) ? value.Email : userProfile.Email;
+                        userProfile.CountyCode = value.CountyCode;
+                        userProfile.DistrictCode = value.DistrictCode;
+                        userProfile.PostalCode = value.PostalCode;
+                        userProfile.Address = !string.IsNullOrEmpty(value.Address) ? value.Address : userProfile.Address;
+                        userProfile.SexCode = value.SexCode;
+                        userProfile.Birthday = value.Birthday != DateTime.MinValue ? value.Birthday : userProfile.Birthday;
+                        userProfile.ModifyDateTime = DateTime.UtcNow;
+
+                        await _context.SaveChangesAsync();
+
+                        return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "使用者資料更新成功", true);
+                }
+
                 // 註冊帳號發送信件
-                [HttpPost("PostSendMail")]
-                public async Task<RequestResultOutputDto<object>> PostSendMail([FromBody] PostSendMailInputDto value)
+                [HttpPost("SendMail")]
+                public async Task<RequestResultOutputDto<object>> SendMail([FromBody] PostSendMailInputDto value)
                 {
                         // 發信前刪除跟這個email相關驗證碼
                         var mail = _context.OtpVerification.Where(x => x.Email == value.Email).ToList();
@@ -520,8 +555,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 驗證OTP
-                [HttpPost("PostValidOtp")]
-                public async Task<RequestResultOutputDto<object>> PostValidOtp([FromBody] PostValidInputDto validOtp)
+                [HttpPost("ValidOtp")]
+                public async Task<RequestResultOutputDto<object>> ValidOtp([FromBody] PostValidInputDto validOtp)
                 {
                         var otp = _context.OtpVerification
                                 .Where(x => x.Email == validOtp.Email && x.Otp == validOtp.Otp && x.ExpirationTime > DateTime.UtcNow && x.IsUsed == false)
@@ -544,8 +579,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 驗證Email
-                [HttpPost("PostValidEmail")]
-                public async Task<RequestResultOutputDto<object>> PostValidEmail([FromBody] PostSendMailInputDto value)
+                [HttpPost("ValidEmail")]
+                public async Task<RequestResultOutputDto<object>> ValidEmail([FromBody] PostSendMailInputDto value)
                 {
                         var validEmail = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
 
@@ -558,8 +593,8 @@ namespace movieTickApi.Controllers
                 }
 
                 // 修改密碼
-                [HttpPut("PutResetPassword")]
-                public async Task<RequestResultOutputDto<object>> PutResetPassword([FromBody] RegisterInputDto value)
+                [HttpPut("ResetPassword")]
+                public async Task<RequestResultOutputDto<object>> ResetPassword([FromBody] RegisterInputDto value)
                 {
                         var user = await _context.User.Where(x => x.Email == value.Email && x.GoogleSub == null).FirstOrDefaultAsync();
 
@@ -579,9 +614,9 @@ namespace movieTickApi.Controllers
                 }
 
                 // 取得縣市
-                [HttpGet("GetLocation")]
+                [HttpGet("Location")]
                 [Authorize]
-                public async Task<RequestResultOutputDto<object>> GetLocation()
+                public async Task<RequestResultOutputDto<object>> Location()
                 {
                         var locations = await _context.Locations.ToListAsync();
 
@@ -605,40 +640,6 @@ namespace movieTickApi.Controllers
                                 Message = "",
                                 Result = locationsGroupData
                         });
-                }
-
-                // 修改個人資料
-                [HttpPut("PutUserProfile")]
-                [Authorize]
-                public async Task<RequestResultOutputDto<object>> PutUserProfile([FromBody] UserProfileInputDto value)
-                {
-                        if (!ModelState.IsValid)
-                        {
-                                return _responseService.ApiRequestResult<object>(400, "請求格式錯誤", false);
-                        }
-
-                        var userId = HttpContext.Items["UserId"] as string;
-
-                        var userProfile = await _context.UserProfile.Where(x => x.UserNo == int.Parse(userId)).FirstOrDefaultAsync();
-
-                        if (userProfile == null)
-                        {
-                                return _responseService.ApiRequestResult<object>(400, "使用者資料不存在", false);
-                        }
-
-                        userProfile.Name = !string.IsNullOrEmpty(value.Name) ? value.Name : userProfile.Name;
-                        userProfile.Email = !string.IsNullOrEmpty(value.Email) ? value.Email : userProfile.Email;
-                        userProfile.CountyCode = value.CountyCode;
-                        userProfile.DistrictCode = value.DistrictCode;
-                        userProfile.PostalCode = value.PostalCode;
-                        userProfile.Address = !string.IsNullOrEmpty(value.Address) ? value.Address : userProfile.Address;
-                        userProfile.SexCode = value.SexCode;
-                        userProfile.Birthday = value.Birthday != DateTime.MinValue ? value.Birthday : userProfile.Birthday;
-                        userProfile.ModifyDateTime = DateTime.UtcNow;
-
-                        await _context.SaveChangesAsync();
-
-                        return _responseService.ApiRequestResult<object>(HttpContext.Response.StatusCode, "使用者資料更新成功", true);
                 }
         }
 }
