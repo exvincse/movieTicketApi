@@ -66,114 +66,12 @@
     &__img + &__msg {
         margin-top: 16px;
     }
-
-    // &__desc {
-    //     max-width: 100%;
-    //     margin: 16px 0 0;
-    //     word-break: break-all;
-
-    //     &--sm {
-    //         width: 315px;
-    //     }
-    // }
-
-    // &__action {
-    //     margin-top: 40px;
-    // }
-
-    // // Modifier - 全尺寸
-    // &--full {
-    //     width: 100%;
-    //     height: 100%;
-    // }
-
-    // // Modifier - 特殊用途
-    // &--success &,
-    // &--failure &,
-    // &__empty {
-    //     &__img {
-    //         margin-top: 16px;
-    //     }
-
-    //     &__msg {
-    //         font-size: 18px;
-    //         font-weight: bold;
-    //     }
-    // }
-
-    // &--success &__img+&__msg,
-    // &--failure &__img+&__msg,
-    // &--empty &__img+&__msg {
-    //     margin-top: 4px;
-    // }
-
-    // &--success &,
-    // &--empty &,
-    // &--nodata &,
-    // &--encourage &,
-    // &--nullData & {
-    //     &__msg {
-    //         font-weight: bold;
-    //         color: #3791ea;
-    //     }
-    // }
-
-    // &--failure & {
-    //     &__msg {
-    //         color: #ff7a00;
-    //     }
-    // }
-
-    // &--empty {
-    //     padding-top: 47px;
-    //     padding-bottom: 122px;
-    // }
-
-    // &--nodata {
-    //     padding: 82px 0;
-    // }
-
-    // &--encourage {
-    //     padding: 72px 16px;
-    // }
-
-    // &--popup#{&}--nodata {
-    //     padding: 28px 0 24px;
-    // }
-
-    // //br跟ac統一使用nullData做為無資料間距
-    // &--nullData {
-    //     padding: 64px 0;
-    // }
-
-    // //popup裡:br跟ac統一使用此做為無資料間距
-    // &--popup#{&}--nullData {
-    //     padding: 48px 0 24px;
-    // }
-
-    // @include breakpoint-down("tablet") {
-    //     &--popup#{&}--nodata {
-    //         padding: 10px 0 16px;
-    //     }
-
-    //     //popup裡:br跟ac統一使用此做為無資料間距
-    //     &--popup#{&}--nullData {
-    //         padding: 32px 0 8px;
-    //     }
-    // }
-
-    // @include breakpoint-down("mobile") {
-
-    //     //br跟ac統一使用nullData做為無資料間距
-    //     &--nullData {
-    //         padding: 72px 0;
-    //     }
-    // }
 }
 
 .c-movieCard {
     display: flex;
     justify-content: center;
+    overflow: hidden;
 
     &--column {
         flex-direction: column;
@@ -196,12 +94,23 @@
         }
     }
 
+    &__head {
+        width: 100%;
+        overflow: hidden;
+    }
+
     &__img {
         width: 100%;
-        padding-top: 150%;
+        height: 375px;
         background-image: url("https://capi.showtimes.com.tw/assets/d3/d3b2d173a83e46df015c03907e9e007a.jpg");
         background-position: center;
         background-size: cover;
+        overflow: hidden;
+
+        &:hover {
+            transform: scale(1.02);
+            transition: transform 0.2s ease;
+        }
 
         &--detail {
             padding-top: 0;
@@ -209,6 +118,10 @@
             max-width: 300px;
             height: 450px;
             margin-right: 20px;
+
+            &:hover {
+                transform: none;
+            }
         }
     }
 
@@ -266,6 +179,7 @@
 
     @include breakpoint-down("mobile") {
         &__img {
+            height: 560px;
             &--detail {
                 max-width: 300px;
                 height: 450px;

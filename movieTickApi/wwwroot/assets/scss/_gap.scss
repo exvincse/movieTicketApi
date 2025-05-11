@@ -1,35 +1,28 @@
 // u-gapT
-@each $name,
-$value in $gaps {
+@each $name, $value in $gaps {
     .u-gapT-#{$name} {
         margin-top: $value;
     }
 }
 
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("desktop") {
+    @each $name, $value in $gaps {
         .u-gapT-#{$name}-d {
             margin-top: $value;
         }
     }
 }
 
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("tablet") {
+    @each $name, $value in $gaps {
         .u-gapT-#{$name}-t {
             margin-top: $value;
         }
     }
 }
 
-@include breakpoint-down('mobile') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-down("mobile") {
+    @each $name, $value in $gaps {
         .u-gapT-#{$name}-m {
             margin-top: $value;
         }
@@ -37,37 +30,30 @@ $value in $gaps {
 }
 
 // u-gapB
-@each $name,
-$value in $gaps {
+@each $name, $value in $gaps {
     .u-gapB-#{$name} {
         margin-bottom: $value;
     }
 }
 
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("desktop") {
+    @each $name, $value in $gaps {
         .u-gapB-#{$name}-d {
             margin-bottom: $value;
         }
     }
 }
 
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("tablet") {
+    @each $name, $value in $gaps {
         .u-gapB-#{$name}-t {
             margin-bottom: $value;
         }
     }
 }
 
-@include breakpoint-down('mobile') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-down("mobile") {
+    @each $name, $value in $gaps {
         .u-gapB-#{$name}-m {
             margin-bottom: $value;
         }
@@ -75,18 +61,15 @@ $value in $gaps {
 }
 
 // u-gapH
-@each $name,
-$value in $gaps {
+@each $name, $value in $gaps {
     .u-gapH-#{$name} {
         padding-left: $value;
         padding-right: $value;
     }
 }
 
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("desktop") {
+    @each $name, $value in $gaps {
         .u-gapH-#{$name}-d {
             padding-left: $value;
             padding-right: $value;
@@ -94,10 +77,8 @@ $value in $gaps {
     }
 }
 
-@include breakpoint-up('tablet') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-up("tablet") {
+    @each $name, $value in $gaps {
         .u-gapH-#{$name}-t {
             padding-left: $value;
             padding-right: $value;
@@ -105,10 +86,8 @@ $value in $gaps {
     }
 }
 
-@include breakpoint-up('mobile') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-up("mobile") {
+    @each $name, $value in $gaps {
         .u-gapH-#{$name}-m {
             padding-left: $value;
             padding-right: $value;
@@ -117,18 +96,15 @@ $value in $gaps {
 }
 
 // u-gapV
-@each $name,
-$value in $gaps {
+@each $name, $value in $gaps {
     .u-gapV-#{$name} {
         margin-top: $value;
         margin-bottom: $value;
     }
 }
 
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("desktop") {
+    @each $name, $value in $gaps {
         .u-gapV-#{$name}-d {
             margin-top: $value;
             margin-bottom: $value;
@@ -136,10 +112,8 @@ $value in $gaps {
     }
 }
 
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("tablet") {
+    @each $name, $value in $gaps {
         .u-gapV-#{$name}-t {
             margin-top: $value;
             margin-bottom: $value;
@@ -147,195 +121,11 @@ $value in $gaps {
     }
 }
 
-@include breakpoint-only('mobile') {
-
-    @each $name,
-    $value in $gaps {
+@include breakpoint-only("mobile") {
+    @each $name, $value in $gaps {
         .u-gapV-#{$name}-m {
             margin-top: $value;
             margin-bottom: $value;
         }
-    }
-}
-
-// u-paraT：會設定margin-bottom: 0;
-@each $name,
-$value in $gaps {
-    .u-paraT-#{$name} {
-        margin-top: $value !important;
-        margin-bottom: 0;
-    }
-}
-
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraT-#{$name}-d {
-            margin-top: $value;
-            margin-bottom: 0;
-        }
-    }
-}
-
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraT-#{$name}-t {
-            margin-top: $value;
-            margin-bottom: 0;
-        }
-    }
-}
-
-@include breakpoint-only('mobile') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraT-#{$name}-m {
-            margin-top: $value;
-            margin-bottom: 0;
-        }
-    }
-}
-
-// u-paraB：會設定margin-top: 0;
-@each $name,
-$value in $gaps {
-    .u-paraB-#{$name} {
-        margin-top: 0;
-        margin-bottom: $value !important;
-    }
-}
-
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraB-#{$name}-d {
-            margin-top: 0;
-            margin-bottom: $value;
-        }
-    }
-}
-
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraB-#{$name}-t {
-            margin-top: 0;
-            margin-bottom: $value;
-        }
-    }
-}
-
-@include breakpoint-only('mobile') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraB-#{$name}-m {
-            margin-top: 0;
-            margin-bottom: $value;
-        }
-    }
-}
-
-// u-gapL：只增加左邊間距
-@each $name,
-$value in $gaps {
-    .u-gapL-#{$name} {
-        padding-left: $value;
-    }
-}
-
-@each $name,
-$value in $gaps {
-    .u-paraL-#{$name} {
-        margin-left: $value !important;
-    }
-}
-
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraL-#{$name}-d {
-            margin-left: $value !important;
-        }
-    }
-}
-
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraL-#{$name}-t {
-            margin-left: $value !important;
-        }
-    }
-}
-
-@include breakpoint-only('mobile') {
-
-    @each $name,
-    $value in $gaps {
-        .u-paraL-#{$name}-m {
-            margin-left: $value !important;
-        }
-    }
-}
-
-// u-gapR：只增加右邊間距
-@each $name,
-$value in $gaps {
-    .u-gapR-#{$name} {
-        padding-right: $value;
-    }
-}
-
-@include breakpoint-only('desktop') {
-
-    @each $name,
-    $value in $gaps {
-        .u-gapR-#{$name}-d {
-            padding-right: $value;
-        }
-    }
-}
-
-@include breakpoint-only('tablet') {
-
-    @each $name,
-    $value in $gaps {
-        .u-gapR-#{$name}-t {
-            padding-right: $value;
-        }
-    }
-}
-
-@include breakpoint-only('mobile') {
-
-    @each $name,
-    $value in $gaps {
-        .u-gapR-#{$name}-m {
-            padding-right: $value;
-        }
-    }
-}
-
-@each $name,
-$value in $gaps {
-    .u-paraR-#{$name} {
-        margin-right: $value !important;
-    }
-}
-
-//u-gapN
-@each $name,
-$value in $gaps {
-    .u-gapN-#{$name}+.u-gapN-#{$name} {
-        margin-top: $value;
     }
 }
