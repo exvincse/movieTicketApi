@@ -50,6 +50,23 @@ namespace movieTickApi.Controllers
                         return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
                 }
 
+                [HttpGet("Setting")]
+                public async Task<ActionResult<RequestResultOutputDto<object>>> GetSetting()
+                {
+                        var result = await _context.Setting.FirstOrDefaultAsync();
+
+                        return _responseService.RequestResult(new RequestResultOutputDto<object>
+                        {
+                                StatusCode = HttpContext.Response.StatusCode,
+                                Message = "",
+                                Result = new SettingOutputDto
+                                {
+                                        TmdbApiKey = result.TmdbApiKey,
+                                        PdAzureSubKey = result.PdAzureSubKey
+                                }
+                        });
+                }
+
                 // 確認是否有登入
                 [HttpGet("IsLogin")]
                 public async Task<ActionResult<RequestResultOutputDto<object>>> IsLogin()

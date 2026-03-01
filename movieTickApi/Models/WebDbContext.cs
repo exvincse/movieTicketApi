@@ -21,7 +21,7 @@ namespace movieTickApi.Models
                 public DbSet<TicketDetailMain> TicketDetailMain { get; set; }
                 public DbSet<TicketDetail> TicketDetail { get; set; }
                 public DbSet<TicketPaymentStatus> TicketPaymentStatus { get; set; }
-
+                public DbSet<Setting> Setting { get; set; }
                 protected override void OnModelCreating(ModelBuilder modelBuilder)
                 {
                         modelBuilder.Entity<UserProfile>()
