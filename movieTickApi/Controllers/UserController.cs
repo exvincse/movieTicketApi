@@ -21,21 +21,18 @@ namespace movieTickApi.Controllers
         {
                 private readonly WebDbContext _context;
                 private readonly IConfiguration _configuration;
-                private readonly IMapper _mapper;
                 private readonly TokenService _tokenService;
                 private readonly ResponseService _responseService;
                 private readonly MailHelper _mailHelper;
 
                 public UserController(
                         WebDbContext context,
-                        IMapper mapper,
                         IConfiguration configuration,
                         TokenService tokenService,
                         ResponseService responseService,
                         MailHelper mailHelper)
                 {
                         _context = context;
-                        _mapper = mapper;
                         _configuration = configuration;
                         _tokenService = tokenService;
                         _responseService = responseService;

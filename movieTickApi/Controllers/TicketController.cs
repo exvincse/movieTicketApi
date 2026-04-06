@@ -17,7 +17,6 @@ namespace movieTickApi.Controllers
         {
                 private readonly WebDbContext _context;
                 private readonly IConfiguration _configuration;
-                private readonly IMapper _mapper;
                 private readonly TokenService _tokenService;
                 private readonly ResponseService _responseService;
                 private readonly PayPalService _payPalService;
@@ -25,14 +24,12 @@ namespace movieTickApi.Controllers
                 public TicketController(
                         WebDbContext context,
                         IConfiguration configuration,
-                        IMapper mapper,
                         TokenService tokenService,
                         ResponseService responseService,
                         PayPalService payPalService
                  )
                 {
                         _context = context;
-                        _mapper = mapper;
                         _configuration = configuration;
                         _tokenService = tokenService;
                         _responseService = responseService;
